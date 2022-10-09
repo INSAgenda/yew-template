@@ -160,7 +160,7 @@ pub(crate) use {
     crate::sink::*,
 };
 
-/// Reads a file and replaces the variables it contains with supplie values. Produces a Yew html! macro invocation.
+/// Reads a file and replaces the variables it contains with the supplied values. Produces a Yew html! macro invocation.
 /// 
 /// ```ignore
 /// let html = template_html!("path", arg="value", arg2="value2", arg3={expression});
