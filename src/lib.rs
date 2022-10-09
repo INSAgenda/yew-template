@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use std::collections::HashMap;
 
-use html5ever::tokenizer::{Tokenizer, TokenizerOpts, TokenSink, Token as HtmlToken};
+use html5ever::{tokenizer::{Tokenizer, TokenizerOpts, TokenSink, Token as HtmlToken, BufferQueue, TokenSinkResult, Doctype}, buffer_queue};
 use proc_macro::{TokenStream, TokenTree};
 use string_tools::get_all_between_strict;
 
@@ -62,15 +62,19 @@ fn parse_args(args: TokenStream) -> Args {
     Args { path, vals }
 }
 
-struct HtmlSink {
-
+struct HtmlSink<'a> {
+    html_tokens: &'a mut Vec<HtmlToken>,
 }
 
-impl TokenSink for HtmlSink {
+impl<'a> TokenSink for HtmlSink<'a> {
     type Handle = ();
 
-    fn process_token(&mut self, token: HtmlToken, _line_number: u64) {
-        println!("{:?}", token);
+    fn process_token(&mut self, token: HtmlToken, _line_number: u64) -> TokenSinkResult<()> {
+        match token {
+            HtmlToken::DoctypeToken(_) => (),
+            token => self.html_tokens.push(token)
+        };
+        TokenSinkResult::Continue
     }
 }
 
@@ -79,7 +83,15 @@ fn generate_code(args: Args) -> String {
         Ok(template) => template,
         Err(e) => panic!("Failed to read template file at {}: {}", args.path, e),
     };
-    //let mut html_tokenizer = Tokenizer::new(sink, TokenizerOpts::default());
+    let mut html_tokens = Vec::new();
+    let html_sink = HtmlSink { html_tokens: &mut html_tokens };
+    let mut html_tokenizer = Tokenizer::new(html_sink, TokenizerOpts::default());
+    let mut buffer_queue = BufferQueue::new();
+    buffer_queue.push_back(template.clone().into());
+    let _  = html_tokenizer.feed(&mut buffer_queue);
+    html_tokenizer.end();
+
+    println!("{:#?}", html_tokens);
 
     while let Some(to_replace) = get_all_between_strict(&template, "{", "}").map(|s| s.to_string()) {
         if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
@@ -99,8 +111,8 @@ pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     println!("{args:?}");
 
-    //let template = generate_code(args);
-    let template = "";
+    let template = generate_code(args);
+    //let template = "";
     println!("{template:?}");
 
     let code = format!("const CODE: &str = r#\"{}\"#;", template);
