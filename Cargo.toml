@@ -9,3 +9,6 @@ proc-macro = true
 [dependencies]
 string-tools = "0.1"
 html5ever = "0.26"
+
+[dev-dependencies]
+yew = "0.19"

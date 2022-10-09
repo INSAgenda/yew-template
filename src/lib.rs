@@ -101,6 +101,7 @@ fn attr_to_yew_string(attr: Attribute, args: &Args) -> String {
                 }
                 format!("{name}=\"{value}\"")
             },
+            Some(TokenTree::Ident(ident)) if ident.to_string() == "true" || ident.to_string() == "false" => format!("{name}=\"{ident}\""),
             Some(value) => {
                 format!("{name}={{{value}}}")
             }
@@ -154,22 +155,13 @@ fn generate_code(args: Args) -> String {
     buffer_queue.push_back(template.clone().into());
     let _  = html_tokenizer.feed(&mut buffer_queue);
     html_tokenizer.end();
-
     println!("{:#?}", html_tokens);
-    let yew_text = html_tokens.into_iter().map(|t| html_token_to_yew_string(t, &args)).collect::<Vec<_>>().join("");
-    println!("{}", yew_text);
 
-    while let Some(to_replace) = get_all_between_strict(&template, "{", "}").map(|s| s.to_string()) {
-        if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-            panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
-        }
+    let yew_html = html_tokens.into_iter().map(|t| html_token_to_yew_string(t, &args)).collect::<Vec<_>>().join("");
+    let yew_code = format!("html! {{ <> {yew_html} </> }}");
+    println!("{}", yew_code);
 
-        let value = args.vals.get(&to_replace).unwrap_or_else(|| panic!("Missing value for {to_replace}"));
-
-        template = template.replace(&format!("{{{}}}", to_replace), &value.to_string());
-    }
-
-    template
+    yew_code
 }
 
 #[proc_macro]
@@ -177,10 +169,6 @@ pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     println!("{args:?}");
 
-    let template = generate_code(args);
-    //let template = "";
-    println!("{template:?}");
-
-    let code = format!("const CODE: &str = r#\"{}\"#;", template);
+    let code = generate_code(args);
     code.parse().unwrap()
 }
