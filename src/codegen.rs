@@ -70,11 +70,11 @@ pub(crate) fn generate_code(args: Args) -> String {
     buffer_queue.push_back(template.into());
     let _  = html_tokenizer.feed(&mut buffer_queue);
     html_tokenizer.end();
-    println!("{:#?}", html_tokens);
+    //println!("{:#?}", html_tokens);
 
     let yew_html = html_tokens.into_iter().map(|t| html_token_to_yew_string(t, &args)).collect::<Vec<_>>().join("");
     let yew_code = format!("html! {{ <> {yew_html} </> }}");
-    println!("{}", yew_code);
+    //println!("{}", yew_code);
 
     yew_code
 }
