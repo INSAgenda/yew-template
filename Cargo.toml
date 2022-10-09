@@ -1,7 +1,11 @@
 [package]
 name = "yew-template"
+description = "This crate allows you to separate your HTML from your Rust code when using Yew."
+authors = ["Mubelotix <mubelotix@gmail.com>", "INSAgenda developers <devs@insagenda.fr>"]
+readme = "README.md"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [lib]
 proc-macro = true
