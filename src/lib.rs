@@ -92,7 +92,7 @@ fn attr_to_yew_string(attr: Attribute) -> String {
     format!("{}=\"{}\"", attr.name.local, attr.value) // TODO
 }
 
-fn html_token_to_yew_string(token: HtmlToken) -> String {
+fn html_token_to_yew_string(token: HtmlToken, args: &Args) -> String {
     match token {
         HtmlToken::TagToken(Tag { kind, name, self_closing, attrs }) => {
             let f_attrs = attrs.into_iter().map(attr_to_yew_string).collect::<Vec<_>>().join(" ");
@@ -102,7 +102,22 @@ fn html_token_to_yew_string(token: HtmlToken) -> String {
                 TagKind::EndTag => format!("</{name} {f_attrs}>"),
             }
         }
-        HtmlToken::CharacterTokens(text) => format!("{{\"{}\"}}", text),
+        HtmlToken::CharacterTokens(text) => {
+            let mut text = text.to_string();
+            while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
+                if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
+                    panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
+                }
+        
+                let value = args.vals.get(&to_replace).unwrap_or_else(|| panic!("Missing value for {to_replace}"));
+        
+                text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
+            }
+            text = format!("{{\"{}\"}}", text);
+            text = text.replace("{\"\"}", "");
+
+            text
+        },
         HtmlToken::DoctypeToken(_) | HtmlToken::CommentToken(_) | HtmlToken::NullCharacterToken | HtmlToken::EOFToken => String::new(),
         HtmlToken::ParseError(_) => unreachable!(),
     }
@@ -122,7 +137,7 @@ fn generate_code(args: Args) -> String {
     html_tokenizer.end();
 
     println!("{:#?}", html_tokens);
-    let yew_text = html_tokens.into_iter().map(html_token_to_yew_string).collect::<Vec<_>>().join("");
+    let yew_text = html_tokens.into_iter().map(|t| html_token_to_yew_string(t, &args)).collect::<Vec<_>>().join("");
     println!("{}", yew_text);
 
     while let Some(to_replace) = get_all_between_strict(&template, "{", "}").map(|s| s.to_string()) {
