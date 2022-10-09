@@ -1,7 +1,9 @@
 extern crate proc_macro;
 use std::collections::HashMap;
 
+use html5ever::tokenizer::{Tokenizer, TokenizerOpts, TokenSink, Token as HtmlToken};
 use proc_macro::{TokenStream, TokenTree};
+use string_tools::get_all_between_strict;
 
 #[derive(Debug)]
 struct Args {
@@ -60,9 +62,47 @@ fn parse_args(args: TokenStream) -> Args {
     Args { path, vals }
 }
 
+struct HtmlSink {
+
+}
+
+impl TokenSink for HtmlSink {
+    type Handle = ();
+
+    fn process_token(&mut self, token: HtmlToken, _line_number: u64) {
+        println!("{:?}", token);
+    }
+}
+
+fn generate_code(args: Args) -> String {
+    let mut template = match std::fs::read_to_string(&args.path) {
+        Ok(template) => template,
+        Err(e) => panic!("Failed to read template file at {}: {}", args.path, e),
+    };
+    //let mut html_tokenizer = Tokenizer::new(sink, TokenizerOpts::default());
+
+    while let Some(to_replace) = get_all_between_strict(&template, "{", "}").map(|s| s.to_string()) {
+        if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
+            panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
+        }
+
+        let value = args.vals.get(&to_replace).unwrap_or_else(|| panic!("Missing value for {to_replace}"));
+
+        template = template.replace(&format!("{{{}}}", to_replace), &value.to_string());
+    }
+
+    template
+}
+
 #[proc_macro]
 pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     println!("{args:?}");
-    "fn answer() -> u32 { println!(\"test\"); 42 }".parse().unwrap()
+
+    //let template = generate_code(args);
+    let template = "";
+    println!("{template:?}");
+
+    let code = format!("const CODE: &str = r#\"{}\"#;", template);
+    code.parse().unwrap()
 }
