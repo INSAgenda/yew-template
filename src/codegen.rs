@@ -3,29 +3,31 @@ use proc_macro::TokenTree;
 use string_tools::get_all_between_strict;
 use crate::*;
 
-fn attr_to_yew_string((name, value): (String, String), args: &Args) -> String {
+fn attr_to_yew_string((name, value): (String, String), opt_required: &mut Vec<String>, args: &Args) -> String {
+    if name == "opt" {
+        return String::new()
+    }
     if value.starts_with('[') && value.ends_with(']') {
         let id = value[1..value.len() - 1].to_string();
-        match args.vals.get(&id) {
-            Some(TokenTree::Literal(lit)) => {
+        match args.get_val(&id, opt_required) {
+            TokenTree::Literal(lit) => {
                 let mut value = lit.to_string();
                 if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
                     value = value[1..value.len() - 1].to_string();
                 }
                 format!("{name}=\"{value}\"")
             },
-            Some(TokenTree::Ident(ident)) if ident.to_string() == "true" || ident.to_string() == "false" => format!("{name}=\"{ident}\""),
-            Some(value) => {
+            TokenTree::Ident(ident) if ident.to_string() == "true" || ident.to_string() == "false" => format!("{name}=\"{ident}\""),
+            value => {
                 format!("{name}={{{value}}}")
             }
-            None => panic!("Missing value for {id}"),
         }
     } else {
         format!("{}=\"{}\"", name, value)
     }
 }
 
-fn html_part_to_yew_string(part: HtmlPart, args: &Args) -> String {
+fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args: &Args) -> String {
     match part {
         HtmlPart::Element(element) => {
             if element.self_closing && !element.close_attrs.is_empty() {
@@ -34,11 +36,22 @@ fn html_part_to_yew_string(part: HtmlPart, args: &Args) -> String {
             if element.self_closing && !element.children.is_empty() {
                 panic!("Self-closing tags cannot have children");
             }
+            let opt = element.open_attrs.iter().any(|(n,_)| n=="opt");
 
-            let f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, args)).collect::<Vec<_>>().join(" ");
-            let f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, args)).collect::<Vec<_>>().join(" ");
+            let mut inner_opt_required = Vec::new();
+            let f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opt_required, args)).collect::<Vec<_>>().join(" ");
+            let f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opt_required, args)).collect::<Vec<_>>().join(" ");
             let name = element.name;
-            let content = element.children.into_iter().map(|p| html_part_to_yew_string(p, args)).collect::<Vec<_>>().join("");
+            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, &mut inner_opt_required, args)).collect::<Vec<_>>().join("");
+            inner_opt_required.sort();
+            inner_opt_required.dedup();
+            opt_required.extend_from_slice(&inner_opt_required);
+
+            if opt {
+                let left = inner_opt_required.iter().map(|id| format!("Some({id})")).collect::<Vec<_>>().join(", ");
+                let right = inner_opt_required.iter().map(|id| args.get_val(id, &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
+                content = format!("if let ({left}) = ({right}) {{ {content} }}");
+            }
 
             match element.self_closing {
                 true => format!("<{name} {f_open_attrs}/>"),
@@ -51,7 +64,10 @@ fn html_part_to_yew_string(part: HtmlPart, args: &Args) -> String {
                     panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
                 }
         
-                let value = args.vals.get(&to_replace).unwrap_or_else(|| panic!("Missing value for {to_replace}"));
+                let mut value = args.get_val(&to_replace, opt_required).to_string();
+                if to_replace.starts_with("opt_") {
+                    value = to_replace.to_string();
+                };
         
                 text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
             }
@@ -85,7 +101,7 @@ pub(crate) fn generate_code(args: Args) -> String {
     root.clean_text();
     println!("{:#?}", root);
 
-    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), &args);
+    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), &mut Vec::new(), &args);
     let yew_code = format!("html! {{ {yew_html} }}");
     println!("{}", yew_code);
 

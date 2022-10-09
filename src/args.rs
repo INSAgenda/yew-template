@@ -5,7 +5,16 @@ use crate::*;
 #[derive(Debug)]
 pub(crate) struct Args {
     pub(crate) path: String,
-    pub(crate) vals: HashMap<String, TokenTree>,
+    vals: HashMap<String, TokenTree>,
+}
+
+impl Args {
+    pub(crate) fn get_val(&self, id: &str, opt_required: &mut Vec<String>) -> TokenTree {
+        if id.starts_with("opt_") {
+            opt_required.push(id.to_string());
+        }
+        self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| panic!("Missing value for {id}"))
+    }
 }
 
 pub(crate) fn parse_args(args: TokenStream) -> Args {
