@@ -88,14 +88,33 @@ impl<'a> TokenSink for HtmlSink<'a> {
     }
 }
 
-fn attr_to_yew_string(attr: Attribute) -> String {
-    format!("{}=\"{}\"", attr.name.local, attr.value) // TODO
+fn attr_to_yew_string(attr: Attribute, args: &Args) -> String {
+    let name = attr.name.local.to_string();
+    let value = attr.value.to_string();
+    if value.starts_with('[') && value.ends_with(']') {
+        let id = value[1..value.len() - 1].to_string();
+        match args.vals.get(&id) {
+            Some(TokenTree::Literal(lit)) => {
+                let mut value = lit.to_string();
+                if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
+                    value = value[1..value.len() - 1].to_string();
+                }
+                format!("{name}=\"{value}\"")
+            },
+            Some(value) => {
+                format!("{name}={{{value}}}")
+            }
+            None => panic!("Missing value for {id}"),
+        }
+    } else {
+        format!("{}=\"{}\"", name, value)
+    }
 }
 
 fn html_token_to_yew_string(token: HtmlToken, args: &Args) -> String {
     match token {
         HtmlToken::TagToken(Tag { kind, name, self_closing, attrs }) => {
-            let f_attrs = attrs.into_iter().map(attr_to_yew_string).collect::<Vec<_>>().join(" ");
+            let f_attrs = attrs.into_iter().map(|a| attr_to_yew_string(a, args)).collect::<Vec<_>>().join(" ");
             match kind {
                 TagKind::StartTag if self_closing => format!("<{name} {f_attrs}/>"),
                 TagKind::StartTag => format!("<{name} {f_attrs}>"),
