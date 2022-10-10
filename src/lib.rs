@@ -1,6 +1,6 @@
 //! This crate allows you to separate your HTML from your Rust code when using [Yew](https://yew.rs).
 //! 
-//! # Usage
+//! # Getting Started
 //! 
 //! ## Hello World
 //! 
@@ -31,7 +31,31 @@
 //! # }
 //! ```
 //! 
-//! ## Using variables
+//! # Usage
+//! 
+//! - [Attributes](#attributes)
+//! - [Variables](#variables)
+//! - [Expressions](#expressions)
+//! - [Example: Yew callbacks](#example-with-yew-callbacks)
+//! - [Optional variables](#optional-variables)
+//! 
+//! ## Attributes
+//! 
+//! ```html
+//! <div style=[style]>
+//!    <p>Hello [name]!</p>
+//! </div>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let html = template_html!("templates/hello.html", name="World", style="color: red;");
+//! # }
+//! ```
+//! 
+//! ## Variables
 //! 
 //! ```rust
 //! # use yew_template::*;
@@ -56,7 +80,7 @@
 //! # }
 //! ```
 //! 
-//! ## Variables with different identifiers
+//! When the name of your variable isn't the same as the name in the template, you can use the following syntax:
 //! 
 //! ```rust
 //! # use yew_template::*;
@@ -67,7 +91,7 @@
 //! # }
 //! ```
 //! 
-//! ## Using expressions
+//! ## Expressions
 //! 
 //! ```rust
 //! # use yew_template::*;
@@ -109,23 +133,7 @@
 //! 
 //! Note that the brackets around expressions are required for expressions.
 //! 
-//! ## In attributes
-//! 
-//! ```html
-//! <div style=[style]>
-//!    <p>Hello [name]!</p>
-//! </div>
-//! ```
-//! 
-//! ```rust
-//! # use yew_template::*;
-//! # use yew::prelude::*;
-//! # fn main() {
-//! let html = template_html!("templates/hello.html", name="World", style="color: red;");
-//! # }
-//! ```
-//! 
-//! ## Applied to Yew callbacks
+//! ## Example with Yew callbacks
 //! 
 //! ```html
 //! <div onclick=[onclick]>
