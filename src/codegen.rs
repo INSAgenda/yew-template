@@ -7,7 +7,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     if name == "opt" || name == "iter" {
         return String::new()
     }
-    if value.starts_with('[') && value.ends_with(']') {
+    if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
         let id = value[1..value.len() - 1].to_string();
         match args.get_val(&id, opts, iters) {
             TokenTree::Literal(lit) => {
@@ -21,6 +21,31 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
             value => {
                 format!("{name}={{{value}}}")
             }
+        }
+    } else if value.contains('[') && value.contains(']') {
+        let mut text = value;
+        let mut end = Vec::new();
+        while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
+            if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
+                panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
+            }
+    
+            let mut value = args.get_val(&to_replace, opts, iters).to_string();
+            if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
+                value = format!("macro_produced_{to_replace}");
+            };
+    
+            if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
+                value = value[1..value.len() - 1].to_string();
+                text = text.replace(&format!("[{}]", to_replace), &value);
+            } else {
+                text = text.replace(&format!("[{}]", to_replace), "{}");
+                end.push(value);
+            }
+        }
+        match end.is_empty() {
+            true => format!("{name}=\"{text}\""),
+            false => format!("{name}={{ format!(\"{text}\", {}) }}", end.join(", "))
         }
     } else {
         format!("{}=\"{}\"", name, value)
