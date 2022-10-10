@@ -184,7 +184,7 @@
 //! # fn main() {
 //! let opt_age: Option<u8> = Some(20);
 //! let opt_birth_city: Option<String> = None;
-//! let html = template_html!("templates/opt.html", name="John", opt_age=opt_age, opt_birth_city=opt_birth_city);
+//! let html = template_html!("templates/opt.html", name="John", opt_age, opt_birth_city);
 //! # }
 //! ```
 //! 

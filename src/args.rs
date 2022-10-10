@@ -34,13 +34,17 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
     };
 
     let mut vals = HashMap::new();
+    let mut comma_passed = false;
     loop {
         // Check comma
-        match tokens.next() {
-            Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {},
-            Some(_) => panic!("Expected a comma (or nothing) after the path to the template file"),
-            None => break,
+        if !comma_passed {
+            match tokens.next() {
+                Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {},
+                Some(_) => panic!("Expected a comma as a separator between parameters"),
+                None => break,
+            }
         }
+        comma_passed = false;
 
         // Get ident as id
         let (id, value_if_none) = match tokens.next() {
@@ -52,14 +56,22 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         // Get equal sign
         match tokens.next() {
             Some(TokenTree::Punct(punct)) if punct.as_char() == '=' => {},
+            Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {
+                comma_passed = true;
+                vals.insert(id, value_if_none);
+                continue
+            },
+            None => {
+                vals.insert(id, value_if_none);
+                break
+            },
             Some(_) => panic!("Expected an equal sign after the identifier"),
-            None => (),
         }
 
         // Get value
         let value = match tokens.next() {
             Some(value) => value,
-            None => value_if_none,
+            None => panic!("Expected a value after the equal sign"),
         };
 
         vals.insert(id, value);
