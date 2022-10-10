@@ -114,6 +114,12 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 false => iters.extend_from_slice(&inner_iters),
             }
 
+            content = match element.self_closing {
+                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
+                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
+                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
+            };
+
             if let Some(present_if) = present_if {
                 if !present_if.starts_with('[') || !present_if.ends_with(']') {
                     abort!(args.path_span, "present_if attribute must be a variable");
@@ -121,17 +127,13 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 let val = args.get_val(&present_if[1..present_if.len() - 1], &mut Vec::new(), &mut Vec::new(), args);
                 content = content.replace('\n', "\n    ");
                 content = format!("\n\
-                    {tabs}    if {val} {{\
-                    {tabs}    {content}\n\
-                    {tabs}    }}"
+                    {tabs}if {val} {{\
+                    {tabs}{content}\n\
+                    {tabs}}}"
                 );
             }
 
-            match element.self_closing {
-                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
-                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
-                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
-            }
+            content
         }
         HtmlPart::Text(mut text) => {
             while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
