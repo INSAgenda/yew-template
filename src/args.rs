@@ -77,6 +77,11 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
             Some(value) => value,
             None => abort!(t.span(), "Expected a value after the equal sign"),
         };
+        if let TokenTree::Ident(ident) = &value {
+            if ident.to_string() == id {
+                emit_warning!(ident.span(), "You can omit the value if it is the same as the identifier");
+            }
+        }
 
         vals.insert(id, value);
     }
