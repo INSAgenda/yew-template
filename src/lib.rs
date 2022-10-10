@@ -234,6 +234,9 @@
 //! <div present-if=[condition]>
 //!     <p>1+1 = 3</p>
 //! </div>
+//! <div present-if=![condition]> <!-- Negation is supported -->
+//!     <p>1+1 != 3</p>
+//! </div>
 //! ```
 //! 
 //! ```rust
