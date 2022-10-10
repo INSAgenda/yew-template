@@ -1,7 +1,7 @@
 <h1 align="center">Yew-Template</h1>
 
 <p align="center">
-    <img alt="Crates.io" src="https://img.shields.io/crates/v/yew-template">
+    <a href="https://crates.io/crates/yew-template"><img alt="Crates.io" src="https://img.shields.io/crates/v/yew-template"></a>
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/INSAgenda/yew-template?color=%23347d39" alt="last commit badge">
     <img alt="GitHub" src="https://img.shields.io/github/license/INSAgenda/yew-template">
     <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/INSAgenda/yew-template">
