@@ -79,12 +79,18 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             inner_iters.sort();
             inner_iters.dedup();
 
+            content = match element.self_closing {
+                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
+                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
+                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
+            };
+
             match opt {
                 true => {
                     let left = inner_opts.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
                     let right = inner_opts.iter().map(|id| args.get_val(id, &mut Vec::new(), &mut Vec::new(), args).to_string()).collect::<Vec<_>>().join(", ");
                     content = content.replace('\n', "\n    ");
-                    content = format!("\n{tabs}    if let ({left}) = ({right}) {{ {content}\n{tabs}    }}");
+                    content = format!("\n{tabs}if let ({left}) = ({right}) {{ {content}\n{tabs}}}");
                 },
                 false => opts.extend_from_slice(&inner_opts),
             }
@@ -100,25 +106,19 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                     let right = inner_iters.iter().map(|id| format!("macro_produced_{id}.next()", )).collect::<Vec<_>>().join(", ");
                     content = content.replace('\n', "\n        ");
                     content = format!("\n\
-                        {tabs}    {{{{\n\
-                        {tabs}    {before}\n\
-                        {tabs}    let mut fragments = Vec::new();\n\
-                        {tabs}    while let ({left}) = ({right}) {{\n\
-                        {tabs}        fragments.push(html! {{ <> {content} \n\
-                        {tabs}        </> }});\n\
-                        {tabs}    }}\n\
-                        {tabs}    fragments.into_iter().collect::<yew::Html>()\n\
-                        {tabs}    }}}}"
+                        {tabs}{{{{\n\
+                        {tabs}{before}\n\
+                        {tabs}let mut fragments = Vec::new();\n\
+                        {tabs}while let ({left}) = ({right}) {{\n\
+                        {tabs}    fragments.push(html! {{ <> {content} \n\
+                        {tabs}    </> }});\n\
+                        {tabs}}}\n\
+                        {tabs}fragments.into_iter().collect::<yew::Html>()\n\
+                        {tabs}}}}}"
                     );
                 },
                 false => iters.extend_from_slice(&inner_iters),
             }
-
-            content = match element.self_closing {
-                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
-                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
-                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
-            };
 
             if let Some(mut present_if) = present_if {
                 let not = present_if.starts_with('!');
