@@ -1,6 +1,15 @@
-# yew-template
+<h1 align="center">Yew-Template</h1>
 
-This crate allows you to separate your HTML from your Rust code when using [Yew](https://yew.rs).
+<p align="center">
+    <img alt="Crates.io" src="https://img.shields.io/crates/v/yew-template">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/INSAgenda/yew-template?color=%23347d39" alt="last commit badge">
+    <img alt="GitHub" src="https://img.shields.io/github/license/INSAgenda/yew-template">
+    <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/INSAgenda/yew-template">
+    <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/INSAgenda/yew-template">
+    <img alt="docs.rs" src="https://img.shields.io/docsrs/yew-template">
+</p>
+
+<p align="center">A crate for separating HTML and Rust code when using <a href="https://yew.rs/">Yew</a>.</p>
 
 ## Getting Started
 
