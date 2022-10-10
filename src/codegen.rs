@@ -1,4 +1,4 @@
-use html5ever::{tokenizer::{Tokenizer, TokenizerOpts, Token as HtmlToken, BufferQueue, Tag, TagKind}, Attribute};
+use html5ever::tokenizer::{Tokenizer, TokenizerOpts, BufferQueue};
 use proc_macro::TokenTree;
 use string_tools::get_all_between_strict;
 use crate::*;

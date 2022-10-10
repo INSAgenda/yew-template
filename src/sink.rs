@@ -1,4 +1,4 @@
-use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, Tag, TagKind}};
+use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, TagKind}};
 
 #[derive(Debug)]
 pub(crate) enum HtmlPart {
