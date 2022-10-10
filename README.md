@@ -30,6 +30,7 @@ let html = html! {
 
 - [Attributes](#attributes)
 - [Variables](#variables)
+- [Struct fields](#struct-fields)
 - [Expressions](#expressions)
 - [Example: Yew callbacks](#example-with-yew-callbacks)
 - [Optional variables](#optional-variables)
@@ -72,6 +73,27 @@ let last_name = "World";
 let html = template_html!("templates/hello.html", name=last_name);
 ```
 
+### Struct fields
+
+Sometimes you want to pass many struct fields as variables to your template, but destructuring the struct would be too verbose.
+Instead, you can pass just the struct and access its fields from the template:
+
+```html
+<div>
+   <p>Hello [person.first_name] [person.last_name]!</p>
+</div>
+```
+
+```rust
+struct Person {
+    first_name: String,
+    last_name: String,
+}
+
+let person = Person { first_name: "Edouard".to_string(), last_name: "Foobar".to_string() };
+let html = template_html!("templates/fields.html", person);
+```
+
 ### Expressions
 
 ```rust
@@ -105,7 +127,7 @@ let html = html! {
 };
 ```
 
-Note that the brackets around expressions are required for expressions.
+Note that the curly brackets around expressions are required for expressions.
 
 ### Example with Yew callbacks
 
@@ -154,7 +176,7 @@ Let's see how optional elements can be nested.
 
 Here, both `opt_age` and `opt_birth_city` are optional. `opt_age` would be displayed even if `opt_birth_city` is `None`. However, if `opt_age` is `None`, `opt_birth_city` will not be displayed regardless of its value.
 
-From the Rust side, there is no usage difference. Note that brackets are required (for now).
+From the Rust side, there is no usage difference. Note that curly brackets are required (for now).
 
 ```rust
 let opt_age: Option<u8> = Some(20);
@@ -209,7 +231,7 @@ let html = html! {
 
 ## Notes
 
-- Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version.
+- Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version. (Note that dynamic string values are always fine and are even escaped by Yew.)
 
 - You can use multiple top-level elements in your html template file.
 
