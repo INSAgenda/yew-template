@@ -25,6 +25,7 @@ impl Element {
                     current_text.push_str(&text);
                 }
                 HtmlPart::Element(mut element) => {
+                    current_text = current_text.trim().to_string();
                     if !current_text.is_empty() {
                         new_children.push(HtmlPart::Text(current_text));
                         current_text = String::new();
