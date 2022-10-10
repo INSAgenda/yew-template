@@ -67,7 +67,7 @@ fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args:
                 }
         
                 let mut value = args.get_val(&to_replace, opt_required).to_string();
-                if to_replace.starts_with("opt_") {
+                if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") {
                     value = format!("macro_produced_{to_replace}");
                 };
         

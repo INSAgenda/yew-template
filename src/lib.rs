@@ -144,8 +144,10 @@
 //! 
 //! ## Optional variables
 //! 
-//! Optional variables are marked with an `opt_` prefix. Their value is expected to be an `Option<T>`.
-//! When the value is `None`, parent html blocks marked with the `opt` attribute are removed.
+//! Optional variables are marked with an `opt_` prefix or an `_opt` suffix, at your option.
+//! Their value is expected to be an `Option<T>`.
+//! 
+//! Optional variables work with optional html elements. Mark an element with the `opt` attribute to make it optional. An optional element will only be rendered if *ALL* the optional variables it contains are `Some`. Note that variables contained by smaller optional elements are excluded from this requirement.
 //! 
 //! ```html
 //! <div>

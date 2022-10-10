@@ -10,7 +10,7 @@ pub(crate) struct Args {
 
 impl Args {
     pub(crate) fn get_val(&self, id: &str, opt_required: &mut Vec<String>) -> TokenTree {
-        if id.starts_with("opt_") {
+        if id.starts_with("opt_") || id.ends_with("_opt") {
             opt_required.push(id.to_string());
         }
         self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| panic!("Missing value for {id}"))
