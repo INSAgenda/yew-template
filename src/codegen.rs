@@ -52,7 +52,8 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     }
 }
 
-fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+    let tabs = "    ".repeat(depth);
     match part {
         HtmlPart::Element(element) => {
             if element.self_closing && !element.close_attrs.is_empty() {
@@ -66,10 +67,16 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
 
             let mut inner_opts = Vec::new();
             let mut inner_iters = Vec::new();
-            let f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
-            let f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let mut f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            if !f_open_attrs.is_empty() {
+                f_open_attrs.insert(0, ' ');
+            }
+            let mut f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            if !f_close_attrs.is_empty() {
+                f_close_attrs.insert(0, ' ');
+            }
             let name = element.name;
-            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
+            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, depth + 1, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
             inner_opts.sort();
             inner_opts.dedup();
             inner_iters.sort();
@@ -79,7 +86,8 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
                 true => {
                     let left = inner_opts.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
                     let right = inner_opts.iter().map(|id| args.get_val(id, &mut Vec::new(), &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
-                    content = format!("if let ({left}) = ({right}) {{ {content} }}");
+                    content = content.replace('\n', "\n    ");
+                    content = format!("\n{tabs}    if let ({left}) = ({right}) {{ {content}\n{tabs}    }}");
                 },
                 false => opts.extend_from_slice(&inner_opts),
             }
@@ -93,21 +101,26 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
                         .join("");
                     let left = inner_iters.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
                     let right = inner_iters.iter().map(|id| format!("macro_produced_{id}.next()", )).collect::<Vec<_>>().join(", ");
-                    content = format!("{{{{
-                        {before}
-                        let mut fragments = Vec::new();
-                        while let ({left}) = ({right}) {{
-                            fragments.push(html! {{ <> {content} </> }});
-                        }}
-                        fragments.into_iter().collect::<yew::Html>()
-                    }}}}");
+                    content = content.replace('\n', "\n        ");
+                    content = format!("\n\
+                        {tabs}    {{{{\n\
+                        {tabs}    {before}\n\
+                        {tabs}    let mut fragments = Vec::new();\n\
+                        {tabs}    while let ({left}) = ({right}) {{\n\
+                        {tabs}        fragments.push(html! {{ <> {content} \n\
+                        {tabs}        </> }});\n\
+                        {tabs}    }}\n\
+                        {tabs}    fragments.into_iter().collect::<yew::Html>()\n\
+                        {tabs}    }}}}"
+                    );
                 },
                 false => iters.extend_from_slice(&inner_iters),
             }
 
             match element.self_closing {
-                true => format!("<{name} {f_open_attrs}/>"),
-                false => format!("<{name} {f_open_attrs}>{content}</{name} {f_close_attrs}>\n"),
+                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
+                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
+                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
             }
         }
         HtmlPart::Text(mut text) => {
@@ -123,7 +136,7 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
         
                 text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
             }
-            text = format!("{{\"{}\"}}", text);
+            text = format!("\n{tabs}{{\"{}\"}}", text);
             text = text.replace("{\"\"}", "");
 
             text
@@ -153,7 +166,7 @@ pub(crate) fn generate_code(args: Args) -> String {
     root.clean_text();
     println!("{:#?}", root);
 
-    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), &mut Vec::new(), &mut Vec::new(), &args);
+    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), 0, &mut Vec::new(), &mut Vec::new(), &args);
     let yew_code = format!("html! {{ {yew_html} }}");
     println!("{}", yew_code);
 

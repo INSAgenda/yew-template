@@ -26,7 +26,7 @@ impl Element {
                     current_text.push_str(&text);
                 }
                 HtmlPart::Element(mut element) => {
-                    current_text = current_text.trim().to_string();
+                    current_text = current_text.trim_matches(|c: char| c.is_whitespace() || c == '\n').to_string();
                     if !current_text.is_empty() {
                         new_children.push(HtmlPart::Text(current_text));
                         current_text = String::new();
@@ -36,6 +36,7 @@ impl Element {
                 }
             }
         }
+        current_text = current_text.trim_matches(|c: char| c.is_whitespace() || c == '\n').to_string();
         if !current_text.is_empty() {
             new_children.push(HtmlPart::Text(current_text));
         }
@@ -88,7 +89,7 @@ impl<'a> TokenSink for HtmlSink<'a> {
                 None => self.html_parts.push(HtmlPart::Text(text.to_string())),
             },
             HtmlToken::NullCharacterToken | HtmlToken::CommentToken(_) | HtmlToken::EOFToken | HtmlToken::DoctypeToken(_) => (),
-            HtmlToken::ParseError(e) => abort!(self.args.path_span, "Failed to parse template: {e} at line {line_number}"),
+            HtmlToken::ParseError(e) => abort!(self.args.path_span, format!("Failed to parse template: {e} at line {line_number}")),
         }
         TokenSinkResult::Continue
     }
