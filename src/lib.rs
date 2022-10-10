@@ -38,6 +38,7 @@
 //! - [Expressions](#expressions)
 //! - [Example: Yew callbacks](#example-with-yew-callbacks)
 //! - [Optional variables](#optional-variables)
+//! - [Iterators](#iterators)
 //! 
 //! ## Attributes
 //! 
@@ -193,6 +194,58 @@
 //! let opt_age: Option<u8> = Some(20);
 //! let opt_birth_city: Option<String> = None;
 //! let html = template_html!("templates/opt.html", name="John", opt_age, opt_birth_city);
+//! # }
+//! ```
+//! 
+//! ## Iterators
+//! 
+//! Iterators work similarly to optional variables. The iterator variables are marked with an `iter_` prefix or an `_iter` suffix, at your option.
+//! The looping html element is marked with the `iter` attribute. The element will reproduce until one of the iterators it depends on is empty.
+//! 
+//! ```html
+//! <div>
+//!     <h2>Contributors:</h2>
+//!     <ul>
+//!         <li iter>[contributors_iter] ([commits_iter] commits)</li>
+//!     </ul>
+//! </div>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let contributors = vec!["John", "Jane", "Jack"]; // Owned values need to be declared as `let` or they would be freed before the template is rendered.
+//! let html = template_html!(
+//!     "templates/iter.html",
+//!     contributors_iter = {contributors.iter()},
+//!     commits_iter = {[42, 21, 7].iter()}
+//! );
+//! # }
+//! ```
+//! 
+//! The code above will act as the following:
+//! 
+//! ```rust
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let contributors = vec!["John", "Jane", "Jack"];
+//! let html = html! {
+//!     <div>
+//!         <h2>{"Contributors:"}</h2>
+//!         <ul>
+//!             {{
+//!                 let mut contributors_iter = { contributors.iter() };
+//!                 let mut commits_iter = { [42, 21, 7].iter() };
+//!                 let mut fragments = Vec::new();
+//!                 while let (Some(contributor), Some(commits)) = (contributors_iter.next(), commits_iter.next()) {
+//!                     fragments.push(html! { <li>{contributor}{" ("}{commits}{" commits)"}</li> });
+//!                 }
+//!                 fragments.into_iter().collect::<Html>()
+//!             }}
+//!         </ul>
+//!    </div>
+//! };
 //! # }
 //! ```
 //! 
