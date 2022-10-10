@@ -35,6 +35,7 @@
 //! 
 //! - [Attributes](#attributes)
 //! - [Variables](#variables)
+//! - [Struct fields](#struct-fields)
 //! - [Expressions](#expressions)
 //! - [Example: Yew callbacks](#example-with-yew-callbacks)
 //! - [Optional variables](#optional-variables)
@@ -89,6 +90,31 @@
 //! # fn main() {
 //! let last_name = "World";
 //! let html = template_html!("templates/hello.html", name=last_name);
+//! # }
+//! ```
+//! 
+//! ## Struct fields
+//! 
+//! Sometimes you want to pass many struct fields as variables to your template, but destructuring the struct would be too verbose.  
+//! Instead, you can pass just the struct and access its fields from the template:
+//! 
+//! ```html
+//! <div>
+//!    <p>Hello [person.first_name] [person.last_name]!</p>
+//! </div>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! struct Person {
+//!     first_name: String,
+//!     last_name: String,
+//! }
+//! 
+//! let person = Person { first_name: "Edouard".to_string(), last_name: "Foobar".to_string() };
+//! let html = template_html!("templates/fields.html", person);
 //! # }
 //! ```
 //! 
