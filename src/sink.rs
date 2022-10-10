@@ -1,4 +1,5 @@
 use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, TagKind}};
+use crate::*;
 
 #[derive(Debug)]
 pub(crate) enum HtmlPart {
@@ -45,6 +46,7 @@ impl Element {
 pub(crate) struct HtmlSink<'a> {
     pub(crate) html_parts: &'a mut Vec<HtmlPart>,
     pub(crate) opened_elements: Vec<Element>,
+    pub(crate) args: &'a Args,
 }
 
 impl<'a> TokenSink for HtmlSink<'a> {
@@ -70,9 +72,9 @@ impl<'a> TokenSink for HtmlSink<'a> {
                     }
                 },
                 TagKind::EndTag => {
-                    let mut element = self.opened_elements.pop().unwrap_or_else(|| panic!("Unexpected closing tag {} at line {line_number}", tag.name));
+                    let mut element = self.opened_elements.pop().unwrap_or_else(|| abort!(self.args.path_span, "Unexpected closing tag {} at line {line_number}", tag.name));
                     if tag.name != element.name {
-                        panic!("Unexpected closing tag {} at line {line_number}", tag.name);
+                        abort!(self.args.path_span, "Unexpected closing tag {} at line {line_number}", tag.name);
                     }
                     element.close_attrs = tag.attrs.into_iter().map(|a| (a.name.local.to_string(), a.value.to_string())).collect();
                     match self.opened_elements.last_mut() {
@@ -86,7 +88,7 @@ impl<'a> TokenSink for HtmlSink<'a> {
                 None => self.html_parts.push(HtmlPart::Text(text.to_string())),
             },
             HtmlToken::NullCharacterToken | HtmlToken::CommentToken(_) | HtmlToken::EOFToken | HtmlToken::DoctypeToken(_) => (),
-            HtmlToken::ParseError(e) => panic!("Failed to parse template: {e} at line {line_number}"),
+            HtmlToken::ParseError(e) => abort!(self.args.path_span, "Failed to parse template: {e} at line {line_number}"),
         }
         TokenSinkResult::Continue
     }

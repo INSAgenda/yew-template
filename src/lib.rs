@@ -265,6 +265,7 @@ pub(crate) use {
     crate::args::*,
     crate::codegen::*,
     crate::sink::*,
+    proc_macro_error::*,
 };
 
 /// Reads a file and replaces the variables it contains with the supplied values. Produces a Yew html! macro invocation.
@@ -275,6 +276,7 @@ pub(crate) use {
 /// 
 /// See top-level documentation for more information.
 #[proc_macro]
+#[proc_macro_error]
 pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     //println!("{args:?}");

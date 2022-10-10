@@ -27,7 +27,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
         let mut end = Vec::new();
         while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
             if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-                panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
+                abort!(args.path_span, "Invalid identifier: {to_replace:?} in template {}", args.path);
             }
     
             let mut value = args.get_val(&to_replace, opts, iters).to_string();
@@ -56,10 +56,10 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
     match part {
         HtmlPart::Element(element) => {
             if element.self_closing && !element.close_attrs.is_empty() {
-                panic!("Self-closing tags cannot have closing attributes");
+                abort!(args.path_span, "Self-closing tags cannot have closing attributes");
             }
             if element.self_closing && !element.children.is_empty() {
-                panic!("Self-closing tags cannot have children");
+                abort!(args.path_span, "Self-closing tags cannot have children");
             }
             let opt = element.open_attrs.iter().any(|(n,_)| n=="opt");
             let iter = element.open_attrs.iter().any(|(n,_)| n=="iter");
@@ -113,7 +113,7 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
         HtmlPart::Text(mut text) => {
             while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
                 if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-                    panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
+                    abort!(args.path_span, "Invalid identifier: {to_replace:?} in template {}", args.path);
                 }
         
                 let mut value = args.get_val(&to_replace, opts, iters).to_string();
@@ -134,10 +134,10 @@ fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut V
 pub(crate) fn generate_code(args: Args) -> String {
     let template = match std::fs::read_to_string(&args.path) {
         Ok(template) => template,
-        Err(e) => panic!("Failed to read template file at {}: {}", args.path, e),
+        Err(e) => abort!(args.path_span, "Failed to read template file at {}: {}", args.path, e),
     };
     let mut html_parts = Vec::new();
-    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new() };
+    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new(), args: &args };
     let mut html_tokenizer = Tokenizer::new(html_sink, TokenizerOpts::default());
     let mut buffer_queue = BufferQueue::new();
     buffer_queue.push_back(template.into());
