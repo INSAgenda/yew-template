@@ -9,9 +9,12 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn get_val(&self, id: &str, opt_required: &mut Vec<String>) -> TokenTree {
+    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>) -> TokenTree {
         if id.starts_with("opt_") || id.ends_with("_opt") {
-            opt_required.push(id.to_string());
+            opts.push(id.to_string());
+        }
+        if id.starts_with("iter_") || id.ends_with("_iter") {
+            iters.push(id.to_string());
         }
         self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| panic!("Missing value for {id}"))
     }

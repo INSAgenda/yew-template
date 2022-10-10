@@ -3,13 +3,13 @@ use proc_macro::TokenTree;
 use string_tools::get_all_between_strict;
 use crate::*;
 
-fn attr_to_yew_string((name, value): (String, String), opt_required: &mut Vec<String>, args: &Args) -> String {
+fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
     if name == "opt" {
         return String::new()
     }
     if value.starts_with('[') && value.ends_with(']') {
         let id = value[1..value.len() - 1].to_string();
-        match args.get_val(&id, opt_required) {
+        match args.get_val(&id, opts, iters) {
             TokenTree::Literal(lit) => {
                 let mut value = lit.to_string();
                 if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
@@ -27,7 +27,7 @@ fn attr_to_yew_string((name, value): (String, String), opt_required: &mut Vec<St
     }
 }
 
-fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args: &Args) -> String {
+fn html_part_to_yew_string(part: HtmlPart, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
     match part {
         HtmlPart::Element(element) => {
             if element.self_closing && !element.close_attrs.is_empty() {
@@ -37,27 +37,52 @@ fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args:
                 panic!("Self-closing tags cannot have children");
             }
             let opt = element.open_attrs.iter().any(|(n,_)| n=="opt");
+            let iter = element.open_attrs.iter().any(|(n,_)| n=="iter");
 
-            let mut inner_opt_required = Vec::new();
-            let f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opt_required, args)).collect::<Vec<_>>().join(" ");
-            let f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opt_required, args)).collect::<Vec<_>>().join(" ");
+            let mut inner_opts = Vec::new();
+            let mut inner_iters = Vec::new();
+            let f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
             let name = element.name;
-            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, &mut inner_opt_required, args)).collect::<Vec<_>>().join("");
-            inner_opt_required.sort();
-            inner_opt_required.dedup();
+            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
+            inner_opts.sort();
+            inner_opts.dedup();
+            inner_iters.sort();
+            inner_iters.dedup();
 
             match opt {
                 true => {
-                    let left = inner_opt_required.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
-                    let right = inner_opt_required.iter().map(|id| args.get_val(id, &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
+                    let left = inner_opts.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
+                    let right = inner_opts.iter().map(|id| args.get_val(id, &mut Vec::new(), &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
                     content = format!("if let ({left}) = ({right}) {{ {content} }}");
                 },
-                false => opt_required.extend_from_slice(&inner_opt_required),
+                false => opts.extend_from_slice(&inner_opts),
+            }
+
+            match iter {
+                true => {
+                    let before = inner_iters
+                        .iter()
+                        .map(|id| format!("let mut macro_produced_{id} = {};", args.get_val(id, &mut Vec::new(), &mut Vec::new())))
+                        .collect::<Vec<_>>()
+                        .join("");
+                    let left = inner_iters.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
+                    let right = inner_iters.iter().map(|id| format!("macro_produced_{id}.next()", )).collect::<Vec<_>>().join(", ");
+                    content = format!("{{{{
+                        {before}
+                        let mut fragments = Vec::new();
+                        while let ({left}) = ({right}) {{
+                            fragments.push(html! {{ <> {content} </> }});
+                        }}
+                        fragments.into_iter().collect::<yew::Html>()
+                    }}}}");
+                },
+                false => iters.extend_from_slice(&inner_iters),
             }
 
             match element.self_closing {
                 true => format!("<{name} {f_open_attrs}/>"),
-                false => format!("<{name} {f_open_attrs}>{content}</{name} {f_close_attrs}>"),
+                false => format!("<{name} {f_open_attrs}>{content}</{name} {f_close_attrs}>\n"),
             }
         }
         HtmlPart::Text(mut text) => {
@@ -66,8 +91,8 @@ fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args:
                     panic!("Invalid identifier: {to_replace:?} in template {}", args.path);
                 }
         
-                let mut value = args.get_val(&to_replace, opt_required).to_string();
-                if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") {
+                let mut value = args.get_val(&to_replace, opts, iters).to_string();
+                if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
                     value = format!("macro_produced_{to_replace}");
                 };
         
@@ -103,7 +128,7 @@ pub(crate) fn generate_code(args: Args) -> String {
     root.clean_text();
     println!("{:#?}", root);
 
-    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), &mut Vec::new(), &args);
+    let yew_html = html_part_to_yew_string(HtmlPart::Element(root), &mut Vec::new(), &mut Vec::new(), &args);
     let yew_code = format!("html! {{ {yew_html} }}");
     println!("{}", yew_code);
 
