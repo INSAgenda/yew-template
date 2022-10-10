@@ -39,6 +39,7 @@
 //! - [Expressions](#expressions)
 //! - [Example: Yew callbacks](#example-with-yew-callbacks)
 //! - [Optional variables](#optional-variables)
+//! - [Optional elements](#optional-elements)
 //! - [Iterators](#iterators)
 //! 
 //! ## Attributes
@@ -220,6 +221,26 @@
 //! let opt_age: Option<u8> = Some(20);
 //! let opt_birth_city: Option<String> = None;
 //! let html = template_html!("templates/opt.html", name="John", opt_age, opt_birth_city);
+//! # }
+//! ```
+//! 
+//! ## Optional elements
+//! 
+//! Sometimes optional variables are not suitable for making an element optional. You might need a logic that is more complex than just checking if a variable is `Some` or `None`. In this case, you can use optional elements.
+//! 
+//! Elements can be given a `present-if` attribute. The value will be evaluated at runtime as a boolean expression. If the expression is `true`, the element will be rendered. Otherwise, it will be skipped.
+//! 
+//! ```html
+//! <div present-if=[condition]>
+//!     <p>1+1 = 3</p>
+//! </div>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let html = template_html!("templates/present_if.html", condition={ 1+1==3 });
 //! # }
 //! ```
 //! 

@@ -4,7 +4,7 @@ use string_tools::get_all_between_strict;
 use crate::*;
 
 fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-    if name == "opt" || name == "iter" {
+    if name == "opt" || name == "iter" || name == "present-if" {
         return String::new()
     }
     if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
@@ -60,6 +60,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             }
             let opt = element.open_attrs.iter().any(|(n,_)| n=="opt");
             let iter = element.open_attrs.iter().any(|(n,_)| n=="iter");
+            let present_if = element.open_attrs.iter().find(|(n,_)| n=="present-if").map(|(_,v)| v.to_owned());
 
             let mut inner_opts = Vec::new();
             let mut inner_iters = Vec::new();
@@ -113,6 +114,19 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 false => iters.extend_from_slice(&inner_iters),
             }
 
+            if let Some(present_if) = present_if {
+                if !present_if.starts_with('[') || !present_if.ends_with(']') {
+                    abort!(args.path_span, "present_if attribute must be a variable");
+                }
+                let val = args.get_val(&present_if[1..present_if.len() - 1], &mut Vec::new(), &mut Vec::new(), args);
+                content = content.replace('\n', "\n    ");
+                content = format!("\n\
+                    {tabs}    if {val} {{\
+                    {tabs}    {content}\n\
+                    {tabs}    }}"
+                );
+            }
+
             match element.self_closing {
                 true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
                 true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
@@ -125,7 +139,6 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
                     value = format!("macro_produced_{to_replace}");
                 };
-                dbg!(value.clone());
                 text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
             }
             text = format!("\n{tabs}{{\"{}\"}}", text);
