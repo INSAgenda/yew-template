@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use proc_macro::{TokenStream, TokenTree, Span};
+use proc_macro::{TokenStream, TokenTree, Span, Group, Delimiter, Ident, Punct, Spacing};
+use string_tools::{get_all_before, get_all_after_strict};
 use crate::*;
 
 #[derive(Debug)]
@@ -11,6 +12,7 @@ pub(crate) struct Args {
 
 impl Args {
     pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> TokenTree {
+        let (id, field) = (get_all_before(id, "."), get_all_after_strict(id, "."));
         if id.chars().any(|c| !c.is_alphanumeric() && c != '_') {
             abort!(args.path_span, "Invalid identifier: {id:?} in template {}", args.path);
         }
@@ -20,7 +22,13 @@ impl Args {
         if id.starts_with("iter_") || id.ends_with("_iter") {
             iters.push(id.to_string());
         }
-        self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| abort_call_site!("Missing value for {id}"))
+        let mut val: TokenTree = self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| abort_call_site!("Missing value for {id}"));
+        if let Some(field) = field {
+            let mut token_stream = TokenStream::new();
+            token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
+            val = TokenTree::Group(Group::new(Delimiter::Brace, token_stream));
+        }
+        val
     }
 }
 

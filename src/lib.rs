@@ -132,7 +132,7 @@
 //! # }
 //! ```
 //! 
-//! Note that the brackets around expressions are required for expressions.
+//! Note that the curly brackets around expressions are required for expressions.
 //! 
 //! ## Example with Yew callbacks
 //! 
@@ -185,7 +185,7 @@
 //! 
 //! Here, both `opt_age` and `opt_birth_city` are optional. `opt_age` would be displayed even if `opt_birth_city` is `None`. However, if `opt_age` is `None`, `opt_birth_city` will not be displayed regardless of its value.
 //! 
-//! From the Rust side, there is no usage difference. Note that brackets are required (for now).
+//! From the Rust side, there is no usage difference. Note that curly brackets are required (for now).
 //! 
 //! ```rust
 //! # use yew_template::*;

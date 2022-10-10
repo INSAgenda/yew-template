@@ -121,12 +121,11 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
         }
         HtmlPart::Text(mut text) => {
             while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
-        
                 let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
                 if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
                     value = format!("macro_produced_{to_replace}");
                 };
-        
+                dbg!(value.clone());
                 text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
             }
             text = format!("\n{tabs}{{\"{}\"}}", text);
