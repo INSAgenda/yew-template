@@ -45,12 +45,14 @@ fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args:
             let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, &mut inner_opt_required, args)).collect::<Vec<_>>().join("");
             inner_opt_required.sort();
             inner_opt_required.dedup();
-            opt_required.extend_from_slice(&inner_opt_required);
 
-            if opt {
-                let left = inner_opt_required.iter().map(|id| format!("Some({id})")).collect::<Vec<_>>().join(", ");
-                let right = inner_opt_required.iter().map(|id| args.get_val(id, &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
-                content = format!("if let ({left}) = ({right}) {{ {content} }}");
+            match opt {
+                true => {
+                    let left = inner_opt_required.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
+                    let right = inner_opt_required.iter().map(|id| args.get_val(id, &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
+                    content = format!("if let ({left}) = ({right}) {{ {content} }}");
+                },
+                false => opt_required.extend_from_slice(&inner_opt_required),
             }
 
             match element.self_closing {
@@ -66,7 +68,7 @@ fn html_part_to_yew_string(part: HtmlPart, opt_required: &mut Vec<String>, args:
         
                 let mut value = args.get_val(&to_replace, opt_required).to_string();
                 if to_replace.starts_with("opt_") {
-                    value = to_replace.to_string();
+                    value = format!("macro_produced_{to_replace}");
                 };
         
                 text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));

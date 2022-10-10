@@ -107,7 +107,7 @@
 //! # }
 //! ```
 //! 
-//! Note that the brackets around expressions are optional.
+//! Note that the brackets around expressions are required for expressions.
 //! 
 //! ## In attributes
 //! 
@@ -139,6 +139,50 @@
 //! # fn main() {
 //! let link = ctx.link();
 //! let html = template_html!("templates/hello.html", name="World", onclick={link.callback(|_| Msg::AddOne)});
+//! # }
+//! ```
+//! 
+//! ## Optional variables
+//! 
+//! Optional variables are marked with an `opt_` prefix. Their value is expected to be an `Option<T>`.
+//! When the value is `None`, parent html blocks marked with the `opt` attribute are removed.
+//! 
+//! ```html
+//! <div>
+//!     <p>Hello [name]!</p>
+//!     <div opt>
+//!         <h2>Age</h2>
+//!         <p>You are [opt_age] years old!</p>
+//!     </div>
+//! </div>
+//! ```
+//! 
+//! In the example above, the `div` block will not be shown if `opt_age` is `None`.
+//! 
+//! Let's see how optional elements can be nested.
+//! 
+//! ```html
+//! <div>
+//!     <p>Hello [name]!</p>
+//!     <div opt>
+//!         <h2>Age</h2>
+//!         <p>You are [opt_age] years old!</p>
+//!         <p opt>And you are born in [opt_birth_city].</p>
+//!     </div>
+//! </div>
+//! ```
+//! 
+//! Here, both `opt_age` and `opt_birth_city` are optional. `opt_age` would be displayed even if `opt_birth_city` is `None`. However, if `opt_age` is `None`, `opt_birth_city` will not be displayed regardless of its value.
+//! 
+//! From the Rust side, there is no usage difference. Note that brackets are required (for now).
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let opt_age: Option<u8> = Some(20);
+//! let opt_birth_city: Option<String> = None;
+//! let html = template_html!("templates/opt.html", name="John", opt_age=opt_age, opt_birth_city=opt_birth_city);
 //! # }
 //! ```
 //! 
