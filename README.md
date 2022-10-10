@@ -195,6 +195,9 @@ Elements can be given a `present-if` attribute. The value will be evaluated at r
 <div present-if=[condition]>
     <p>1+1 = 3</p>
 </div>
+<div present-if=![condition]> <!-- Negation is supported -->
+    <p>1+1 != 3</p>
+</div>
 ```
 
 ```rust
