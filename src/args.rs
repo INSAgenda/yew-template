@@ -22,7 +22,7 @@ impl Args {
         if id.starts_with("iter_") || id.ends_with("_iter") {
             iters.push(id.to_string());
         }
-        let mut val: TokenTree = self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| abort_call_site!("Missing value for {id}"));
+        let mut val: TokenTree = self.vals.get(id).map(|v| v.to_owned()).unwrap_or_else(|| abort_call_site!(format!("Missing value for {id}")));
         if let Some(field) = field {
             let mut token_stream = TokenStream::new();
             token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
