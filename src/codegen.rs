@@ -9,7 +9,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     }
     if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
         let id = value[1..value.len() - 1].to_string();
-        match args.get_val(&id, opts, iters) {
+        match args.get_val(&id, opts, iters, args) {
             TokenTree::Literal(lit) => {
                 let mut value = lit.to_string();
                 if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
@@ -26,11 +26,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
         let mut text = value;
         let mut end = Vec::new();
         while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
-            if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-                abort!(args.path_span, "Invalid identifier: {to_replace:?} in template {}", args.path);
-            }
-    
-            let mut value = args.get_val(&to_replace, opts, iters).to_string();
+            let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
             if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
                 value = format!("macro_produced_{to_replace}");
             };
@@ -85,7 +81,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             match opt {
                 true => {
                     let left = inner_opts.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
-                    let right = inner_opts.iter().map(|id| args.get_val(id, &mut Vec::new(), &mut Vec::new()).to_string()).collect::<Vec<_>>().join(", ");
+                    let right = inner_opts.iter().map(|id| args.get_val(id, &mut Vec::new(), &mut Vec::new(), args).to_string()).collect::<Vec<_>>().join(", ");
                     content = content.replace('\n', "\n    ");
                     content = format!("\n{tabs}    if let ({left}) = ({right}) {{ {content}\n{tabs}    }}");
                 },
@@ -96,7 +92,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 true => {
                     let before = inner_iters
                         .iter()
-                        .map(|id| format!("let mut macro_produced_{id} = {};", args.get_val(id, &mut Vec::new(), &mut Vec::new())))
+                        .map(|id| format!("let mut macro_produced_{id} = {};", args.get_val(id, &mut Vec::new(), &mut Vec::new(), args)))
                         .collect::<Vec<_>>()
                         .join("");
                     let left = inner_iters.iter().map(|id| format!("Some(macro_produced_{id})")).collect::<Vec<_>>().join(", ");
@@ -125,11 +121,8 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
         }
         HtmlPart::Text(mut text) => {
             while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
-                if to_replace.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-                    abort!(args.path_span, "Invalid identifier: {to_replace:?} in template {}", args.path);
-                }
         
-                let mut value = args.get_val(&to_replace, opts, iters).to_string();
+                let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
                 if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
                     value = format!("macro_produced_{to_replace}");
                 };

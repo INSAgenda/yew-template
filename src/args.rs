@@ -10,7 +10,10 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>) -> TokenTree {
+    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> TokenTree {
+        if id.chars().any(|c| !c.is_alphanumeric() && c != '_') {
+            abort!(args.path_span, "Invalid identifier: {id:?} in template {}", args.path);
+        }
         if id.starts_with("opt_") || id.ends_with("_opt") {
             opts.push(id.to_string());
         }
