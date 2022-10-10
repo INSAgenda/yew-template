@@ -25,6 +25,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     } else if value.contains('[') && value.contains(']') {
         let mut text = value;
         let mut end = Vec::new();
+        let mut i = 0;
         while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
             let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
             if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
@@ -35,8 +36,9 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
                 value = value[1..value.len() - 1].to_string();
                 text = text.replace(&format!("[{}]", to_replace), &value);
             } else {
-                text = text.replace(&format!("[{}]", to_replace), "{}");
-                end.push(value);
+                text = text.replace(&format!("[{}]", to_replace), &format!("{{attribute_value_{i}}}"));
+                end.push(format!("attribute_value_{i} = {value}"));
+                i += 1;
             }
         }
         match end.is_empty() {
