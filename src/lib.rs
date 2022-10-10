@@ -277,7 +277,7 @@
 //! 
 //! # Notes
 //! 
-//! - Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version.
+//! - Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version. (Note that dynamic string values are always fine and are even escaped by Yew.)
 //! 
 //! - You can use multiple top-level elements in your html template file.
 
