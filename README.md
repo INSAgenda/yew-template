@@ -45,6 +45,7 @@ let html = html! {
 - [Optional variables](#optional-variables)
 - [Optional elements](#optional-elements)
 - [Iterators](#iterators)
+- [Minimizing bloat](#minimizing-bloat)
 
 ### Attributes
 
@@ -257,6 +258,23 @@ let html = html! {
    </div>
 };
 ```
+
+### Minimizing bloat
+
+The whole point of using this crate is making your code more readable. However, you will still find yourself writing lines of code that do not carry that much meaning. We already saw that `variable_ident=variable_ident` can be shortened to `variable_ident`. But it could even be completely omitted! Add `...` at the end of your macro call to tell that undefined variables should be retrieved from local variables with the same name. Taking the "Hello world" example:
+
+```html
+<div>
+    <p>Hello [name]!</p>
+</div>
+```
+
+```rust
+let name = "World";
+let html = template_html!("templates/hello.html", ...);
+```
+
+This behavior is disabled by default because undefined variables are often errors.
 
 ## Notes
 
