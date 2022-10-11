@@ -112,7 +112,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                         {tabs}{before}\n\
                         {tabs}let mut fragments = Vec::new();\n\
                         {tabs}while let ({left}) = ({right}) {{\n\
-                        {tabs}    fragments.push(html! {{ <> {content} \n\
+                        {tabs}    fragments.push(yew::html! {{ <> {content} \n\
                         {tabs}    </> }});\n\
                         {tabs}}}\n\
                         {tabs}fragments.into_iter().collect::<yew::Html>()\n\
