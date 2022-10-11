@@ -21,6 +21,7 @@ jobs:
         path: |
           ~/.cargo/
           target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/rust.yml') }}
     - name: Build
       run: cargo build --verbose
     - name: Run tests
