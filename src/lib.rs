@@ -33,8 +33,8 @@
 //! 
 //! # Usage
 //! 
-//! - [Attributes](#attributes)
 //! - [Variables](#variables)
+//! - [Attributes](#attributes)
 //! - [Struct fields](#struct-fields)
 //! - [Expressions](#expressions)
 //! - [Example: Yew callbacks](#example-with-yew-callbacks)
@@ -42,22 +42,6 @@
 //! - [Optional elements](#optional-elements)
 //! - [Iterators](#iterators)
 //! - [Minimizing bloat](#minimizing-bloat)
-//! 
-//! ## Attributes
-//! 
-//! ```html
-//! <div style=[style]>
-//!    <p>Hello [name]!</p>
-//! </div>
-//! ```
-//! 
-//! ```rust
-//! # use yew_template::*;
-//! # use yew::prelude::*;
-//! # fn main() {
-//! let html = template_html!("templates/hello.html", name="World", style="color: red;");
-//! # }
-//! ```
 //! 
 //! ## Variables
 //! 
@@ -90,15 +74,43 @@
 //! # use yew_template::*;
 //! # use yew::prelude::*;
 //! # fn main() {
-//! let last_name = "World";
-//! let html = template_html!("templates/hello.html", name=last_name);
+//! let other_name = "Yew";
+//! let html = template_html!("templates/hello.html", name=other_name);
 //! # }
+//! ```
+//! 
+//! ## Attributes
+//! 
+//! ```html
+//! <div style=[style]>
+//!    <p>Hello [name]!</p>
+//! </div>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let html = template_html!(
+//!     "templates/hello.html",
+//!     name="Yew",
+//!     style="color: red;"
+//! );
+//! # }
+//! ```
+//! 
+//! Yew-template supports a `format!`-like syntax in attributes, allowing you to do the following:
+//! 
+//! ```html
+//! <div style="background-color: [bg_color]; color: [text_color];">
+//!    Yew is cool
+//! </div>
 //! ```
 //! 
 //! ## Struct fields
 //! 
 //! Sometimes you want to pass many struct fields as variables to your template, but destructuring the struct would be too verbose.  
-//! Instead, you can pass just the struct and access its fields from the template:
+//! As when using the actual yew macro, you can just pass the struct and access its fields from the template:
 //! 
 //! ```html
 //! <div>
@@ -115,7 +127,10 @@
 //!     last_name: String,
 //! }
 //! 
-//! let person = Person { first_name: "Edouard".to_string(), last_name: "Foobar".to_string() };
+//! let person = Person {
+//!     first_name: "Edouard".to_string(),
+//!     last_name: "Foobar".to_string()
+//! };
 //! let html = template_html!("templates/fields.html", person);
 //! # }
 //! ```
@@ -139,7 +154,7 @@
 //! # }
 //! ```
 //! 
-//! Which will also display `Hello World!` as the output is as follows:
+//! Which will also display `Hello World!` as the Yew-code output is as follows:
 //! 
 //! ```rust
 //! # use yew::prelude::*;
@@ -175,7 +190,11 @@
 //! # use yew::prelude::*;
 //! # fn main() {
 //! let link = ctx.link();
-//! let html = template_html!("templates/hello.html", name="World", onclick={link.callback(|_| Msg::AddOne)});
+//! let html = template_html!(
+//!     "templates/hello.html",
+//!     name="World",
+//!     onclick={link.callback(|_| Msg::AddOne)}
+//! );
 //! # }
 //! ```
 //! 
@@ -221,9 +240,16 @@
 //! # fn main() {
 //! let opt_age: Option<u8> = Some(20);
 //! let opt_birth_city: Option<String> = None;
-//! let html = template_html!("templates/opt.html", name="John", opt_age, opt_birth_city);
+//! let html = template_html!(
+//!     "templates/opt.html",
+//!     name="John",
+//!     opt_age,
+//!     opt_birth_city
+//! );
 //! # }
 //! ```
+//! 
+//! In the generated Yew code, `if let` expressions are used. As a result, optional variables based on expressions behave differently as they are only evaluated once for each optional element using them.
 //! 
 //! ## Optional elements
 //! 
@@ -275,7 +301,7 @@
 //! # }
 //! ```
 //! 
-//! The code above will act as the following:
+//! The code above will act as the following for Yew:
 //! 
 //! ```rust
 //! # use yew::prelude::*;
@@ -300,9 +326,11 @@
 //! # }
 //! ```
 //! 
+//! As of now, Yew item references in lists are not supported. This will be inmplemented in the future as the Yew documentation recommends, though the performance impact has been found to be negligible in most cases.
+//! 
 //! ## Minimizing bloat
 //! 
-//! The whole point of using this crate is making your code more readable. However, you will still find yourself writing lines of code that do not carry that much meaning. We already saw that `variable_ident=variable_ident` can be shortened to `variable_ident`. But it could even be completely omitted! Add `...` at the end of your macro call to tell that undefined variables should be retrieved from local variables with the same name. Taking the "Hello world" example:
+//! The whole point of using this crate is making your code more readable than when using Yew directly. However, you will still find yourself writing lines of code that do not carry that much meaning. We already saw that `variable_ident=variable_ident` can be shortened to `variable_ident`. But it could even be completely omitted! Add `...` at the end of your macro call to tell that undefined variables should be retrieved from local variables with the same name. Taking the "Hello world" example:
 //! 
 //! ```html
 //! <div>
@@ -326,6 +354,9 @@
 //! - Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version. (Note that dynamic string values are always fine and are even escaped by Yew.)
 //! 
 //! - You can use multiple top-level elements in your html template file.
+//! 
+//! - While the crate is still experimental, it will be production-ready in a few weeks and will be maintained for the foreseeable future. It will also always support the latest version of Yew.
+//! 
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
