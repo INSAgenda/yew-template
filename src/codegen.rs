@@ -81,10 +81,18 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             inner_iters.sort();
             inner_iters.dedup();
 
-            content = match el.self_closing {
-                true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
-                true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
-                false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
+            content = match name == "none" {
+                true => {
+                    if !f_open_attrs.is_empty() || !f_close_attrs.is_empty() {
+                        abort!(args.path_span, "None tags cannot have attributes");
+                    }
+                    content.replace("\n    ", "\n")
+                },
+                false => match el.self_closing {
+                    true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
+                    true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
+                    false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
+                }
             };
 
             match opt {
