@@ -3,11 +3,11 @@ use proc_macro::TokenTree;
 use string_tools::get_all_between_strict;
 use crate::*;
 
-fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
     if name == "opt" || name == "iter" || name == "present-if" {
-        return String::new()
+        return None
     }
-    if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
+    Some(if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
         let id = value[1..value.len() - 1].to_string();
         match args.get_val(&id, opts, iters, args) {
             TokenTree::Literal(lit) => {
@@ -47,7 +47,7 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
         }
     } else {
         format!("{}=\"{}\"", name, value)
-    }
+    })
 }
 
 fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
@@ -66,11 +66,11 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
 
             let mut inner_opts = Vec::new();
             let mut inner_iters = Vec::new();
-            let mut f_open_attrs = el.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let mut f_open_attrs = el.open_attrs.into_iter().filter_map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
             if !f_open_attrs.is_empty() {
                 f_open_attrs.insert(0, ' ');
             }
-            let mut f_close_attrs = el.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let mut f_close_attrs = el.close_attrs.into_iter().filter_map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
             if !f_close_attrs.is_empty() {
                 f_close_attrs.insert(0, ' ');
             }
@@ -84,7 +84,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             content = match name == "virtual" {
                 true => {
                     if !f_open_attrs.is_empty() || !f_close_attrs.is_empty() {
-                        abort!(args.path_span, "Virtual elements cannot have attributes");
+                        abort!(args.path_span, "Virtual elements cannot have attributes (found {:?} and {:?})", f_open_attrs, f_close_attrs);
                     }
                     content.replace("\n    ", "\n")
                 },
