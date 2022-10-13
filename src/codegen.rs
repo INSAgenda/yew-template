@@ -53,35 +53,35 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
 fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
     let tabs = "    ".repeat(depth);
     match part {
-        HtmlPart::Element(element) => {
-            if element.self_closing && !element.close_attrs.is_empty() {
+        HtmlPart::Element(el) => {
+            if el.self_closing && !el.close_attrs.is_empty() {
                 abort!(args.path_span, "Self-closing tags cannot have closing attributes");
             }
-            if element.self_closing && !element.children.is_empty() {
+            if el.self_closing && !el.children.is_empty() {
                 abort!(args.path_span, "Self-closing tags cannot have children");
             }
-            let opt = element.open_attrs.iter().any(|(n,_)| n=="opt");
-            let iter = element.open_attrs.iter().any(|(n,_)| n=="iter");
-            let present_if = element.open_attrs.iter().find(|(n,_)| n=="present-if").map(|(_,v)| v.to_owned());
+            let opt = el.open_attrs.iter().any(|(n,_)| n=="opt");
+            let iter = el.open_attrs.iter().any(|(n,_)| n=="iter");
+            let present_if = el.open_attrs.iter().find(|(n,_)| n=="present-if").map(|(_,v)| v.to_owned());
 
             let mut inner_opts = Vec::new();
             let mut inner_iters = Vec::new();
-            let mut f_open_attrs = element.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let mut f_open_attrs = el.open_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
             if !f_open_attrs.is_empty() {
                 f_open_attrs.insert(0, ' ');
             }
-            let mut f_close_attrs = element.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
+            let mut f_close_attrs = el.close_attrs.into_iter().map(|a| attr_to_yew_string(a, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join(" ");
             if !f_close_attrs.is_empty() {
                 f_close_attrs.insert(0, ' ');
             }
-            let name = element.name;
-            let mut content = element.children.into_iter().map(|p| html_part_to_yew_string(p, depth + 1, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
+            let name = el.name;
+            let mut content = el.children.into_iter().map(|p| html_part_to_yew_string(p, depth + 1, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
             inner_opts.sort();
             inner_opts.dedup();
             inner_iters.sort();
             inner_iters.dedup();
 
-            content = match element.self_closing {
+            content = match el.self_closing {
                 true if &name == "br" => format!("<{name} {f_open_attrs}/>"),
                 true => format!("\n{tabs}<{name}{f_open_attrs}/>"),
                 false => format!("\n{tabs}<{name}{f_open_attrs}>{content}\n{tabs}</{name}{f_close_attrs}>"),
