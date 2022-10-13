@@ -81,10 +81,10 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             inner_iters.sort();
             inner_iters.dedup();
 
-            content = match name == "none" {
+            content = match name == "virtual" {
                 true => {
                     if !f_open_attrs.is_empty() || !f_close_attrs.is_empty() {
-                        abort!(args.path_span, "None tags cannot have attributes");
+                        abort!(args.path_span, "Virtual elements cannot have attributes");
                     }
                     content.replace("\n    ", "\n")
                 },
