@@ -12,7 +12,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let html = template_html!("templates/hello.html", name="World");
 //! # }
@@ -23,7 +22,7 @@
 //! ```rust
 //! # use yew::prelude::*;
 //! # fn main() {
-//! let html = html! {
+//! let html = yew::html! {
 //!     <div>
 //!         <p>{"Hello World!"}</p>
 //!     </div>
@@ -42,12 +41,12 @@
 //! - [Optional elements](#optional-elements)
 //! - [Iterators](#iterators)
 //! - [Minimizing bloat](#minimizing-bloat)
+//! - [Virtual elements](#virtual-elements)
 //! 
 //! ## Variables
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let name = "World";
 //! let html = template_html!("templates/hello.html", name);
@@ -60,7 +59,7 @@
 //! # use yew::prelude::*;
 //! # fn main() {
 //! let name = "World";
-//! let html = html! {
+//! let html = yew::html! {
 //!     <div>
 //!         <p>{"Hello "}{name}{"!"}</p>
 //!     </div>
@@ -72,7 +71,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let other_name = "Yew";
 //! let html = template_html!("templates/hello.html", name=other_name);
@@ -89,7 +87,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let html = template_html!(
 //!     "templates/hello.html",
@@ -120,7 +117,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! struct Person {
 //!     first_name: String,
@@ -139,7 +135,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let name_reversed = String::from("dlroW");
 //! let html = template_html!(
@@ -160,7 +155,7 @@
 //! # use yew::prelude::*;
 //! # fn main() {
 //! let name_reversed = String::from("dlroW");
-//! let html = html! {
+//! let html = yew::html! {
 //!     <div>
 //!         <p>
 //!             {"Hello "}{{
@@ -187,7 +182,6 @@
 //! 
 //! ```ignore
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let link = ctx.link();
 //! let html = template_html!(
@@ -236,7 +230,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let opt_age: Option<u8> = Some(20);
 //! let opt_birth_city: Option<String> = None;
@@ -268,7 +261,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let html = template_html!("templates/present_if.html", condition={ 1+1==3 });
 //! # }
@@ -290,7 +282,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let contributors = vec!["John", "Jane", "Jack"]; // Owned values need to be declared as `let` or they would be freed before the template is rendered.
 //! let html = template_html!(
@@ -307,7 +298,7 @@
 //! # use yew::prelude::*;
 //! # fn main() {
 //! let contributors = vec!["John", "Jane", "Jack"];
-//! let html = html! {
+//! let html = yew::html! {
 //!     <div>
 //!         <h2>{"Contributors:"}</h2>
 //!         <ul>
@@ -340,7 +331,6 @@
 //! 
 //! ```rust
 //! # use yew_template::*;
-//! # use yew::prelude::*;
 //! # fn main() {
 //! let name = "World";
 //! let html = template_html!("templates/hello.html", ...);
@@ -348,6 +338,44 @@
 //! ```
 //! 
 //! This behavior is disabled by default because undefined variables are often errors.
+//! 
+//! ## Virtual elements
+//! 
+//! Yew-template often requires you to add attributes on html elements such as `iter`, `opt` or `present-if`. In rare cases, you don't have any suitable element to add these attributes to, and adding a wrapper element would break your CSS. In this case, you can use virtual elements. The virtual elements tag will be removed from the final HTML but it allows you to add special attributes where they are needed.
+//! 
+//! ```html
+//! <virtual opt>
+//!     [opt_name]
+//! </virtual>
+//! ```
+//! 
+//! ```rust
+//! # use yew_template::*;
+//! # fn main() {
+//! let opt_name = Some("John".to_string());
+//! let html = template_html!("templates/virtual.html", opt_name);
+//! # }
+//! ```
+//! 
+//! On Yew side, this will be seen as:
+//! 
+//! ```rust
+//! # use yew::prelude::*;
+//! # fn main() {
+//! let opt_name = Some("John".to_string());
+//! let html = yew::html! {
+//!    <>
+//!       if let Some(opt_name) = opt_name { {opt_name} }
+//!   </>
+//! };
+//! # }
+//! ```
+//! 
+//! And Yew will produce the following HTML:
+//! 
+//! ```html
+//! John
+//! ```
 //! 
 //! # Notes
 //! 

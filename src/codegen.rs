@@ -187,7 +187,7 @@ pub(crate) fn generate_code(args: Args) -> String {
         children: html_parts,
     };
     root.clean_text();
-    println!("{:#?}", root);
+    //println!("{:#?}", root);
 
     let yew_html = html_part_to_yew_string(HtmlPart::Element(root), 0, &mut Vec::new(), &mut Vec::new(), &args);
     let yew_code = format!("yew::html! {{ {yew_html} }}");
