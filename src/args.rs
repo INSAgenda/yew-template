@@ -7,6 +7,7 @@ use crate::*;
 pub(crate) struct Args {
     pub(crate) path: String,
     pub(crate) path_span: Span,
+    pub(crate) catalog: Catalog,
     auto_default: bool,
     vals: HashMap<String, TokenTree>,
 }
@@ -137,5 +138,8 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         vals.insert(id, value);
     }
 
-    Args { path, path_span, vals, auto_default }
+    // TODO
+    let catalog = Catalog::new(vec![String::from("locales/fr.mo")], String::from("en"));
+
+    Args { path, path_span, vals, auto_default, catalog }
 }

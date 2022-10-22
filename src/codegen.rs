@@ -1,6 +1,8 @@
+use std::path::Path;
+
 use html5ever::tokenizer::{Tokenizer, TokenizerOpts, BufferQueue};
 use proc_macro::TokenTree;
-use string_tools::get_all_between_strict;
+use string_tools::{get_all_between_strict, get_all_before, get_all_before_strict};
 use crate::*;
 
 fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
@@ -48,6 +50,25 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     } else {
         format!("{}=\"{}\"", name, value)
     })
+}
+
+trait HackTraitVecTextPart {
+    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String;
+}
+
+impl HackTraitVecTextPart for Vec<TextPart> {
+    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+        self.iter().map(|p| match p {
+            TextPart::Literal(t) => format!("{{\"{t}\"}}"),
+            TextPart::Variable(id) => {
+                let mut value = args.get_val(id, opts, iters, args).to_string();
+                if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
+                    value = format!("macro_produced_{id}");
+                };
+                format!("{{{value}}}")
+            },
+        }).collect::<Vec<_>>().join("")
+    }
 }
 
 fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
@@ -151,42 +172,59 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
 
             content
         }
-        HtmlPart::Text(mut text) => {
-            while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
-                let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
-                if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
-                    value = format!("macro_produced_{to_replace}");
-                };
-                text = text.replace(&format!("[{}]", to_replace), &format!("\"}}{{{value}}}{{\""));
+        HtmlPart::Text(text) => {
+            let translations = args.catalog.translate_text(&text, args);
+            
+            // Translations are disabled
+            if translations.len() == 1 {
+                return format!("\n{tabs}{}", translations[0].1.generate_code(opts, iters, args));
             }
-            text = format!("\n{tabs}{{\"{}\"}}", text);
-            text = text.replace("{\"\"}", "");
 
-            text
+            // It's a simple case with a static string
+            let mut all_are_single_literal = true;
+            for (_, translation) in &translations {
+                if translation.len() != 1 || !matches!(translation[0], TextPart::Literal(_)) {
+                    all_are_single_literal = false;
+                    break;
+                }
+            }
+            if all_are_single_literal {
+                let mut result = String::new();
+                result.push_str(&format!("\n{tabs}{{match locale.as_str() {{\n"));
+                for (i, (locale, translation)) in translations.iter().enumerate().rev() {
+                    let arm = match i == 0 {
+                        true => String::from("_"),
+                        false => format!("\"{locale}\""),
+                    };
+                    let text = match &translation[0] {
+                        TextPart::Literal(l) => l,
+                        _ => unreachable!(),
+                    };
+                    result.push_str(&format!("{tabs}    {arm} => \"{text}\",\n"));
+                }
+                result.push_str(&format!("{tabs}}}}}"));
+                return result;
+            }
+
+            // It's a complex case
+            let mut result = String::new();
+            result.push_str(&format!("\n{tabs}{{match locale.as_str() {{\n"));
+            for (i, (locale, translation)) in translations.iter().enumerate().rev() {
+                let arm = match i == 0 {
+                    true => String::from("_"),
+                    false => format!("\"{locale}\""),
+                };
+                let code = translation.generate_code(opts, iters, args);
+                result.push_str(&format!("{tabs}    {arm} => yew::html! {{ <> {code} </> }},\n"));
+            }
+            result.push_str(&format!("{tabs}}}}}"));
+
+            result
         }
     }
 }
 
-pub(crate) fn generate_code(args: Args) -> String {
-    let template = match std::fs::read_to_string(&args.path) {
-        Ok(template) => template,
-        Err(e) => abort!(args.path_span, "Failed to read template file at {}: {}", args.path, e),
-    };
-    let mut html_parts = Vec::new();
-    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new(), args: &args };
-    let mut html_tokenizer = Tokenizer::new(html_sink, TokenizerOpts::default());
-    let mut buffer_queue = BufferQueue::new();
-    buffer_queue.push_back(template.into());
-    let _  = html_tokenizer.feed(&mut buffer_queue);
-    html_tokenizer.end();
-    let mut root = Element {
-        name: "".to_string(),
-        open_attrs: Vec::new(),
-        close_attrs: Vec::new(),
-        self_closing: false,
-        children: html_parts,
-    };
-    root.clean_text();
+pub(crate) fn generate_code(root: Element, args: Args) -> String {
     //println!("{:#?}", root);
 
     let yew_html = html_part_to_yew_string(HtmlPart::Element(root), 0, &mut Vec::new(), &mut Vec::new(), &args);

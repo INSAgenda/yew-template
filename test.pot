@@ -1,0 +1,49 @@
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[value]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "Yoo man [value2]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[opt_value]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[opt_value2]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "Thank you, [names_iter]!"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[person.first_name] [person.last_name]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "You have a password!"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "You have no password..."
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[zebi]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[zebi]"
+msgstr ""

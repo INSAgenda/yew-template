@@ -1,4 +1,4 @@
-use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, TagKind}};
+use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, TagKind, Tokenizer, TokenizerOpts, BufferQueue}};
 use crate::*;
 
 pub(crate) struct HtmlSink<'a> {
@@ -50,4 +50,27 @@ impl<'a> TokenSink for HtmlSink<'a> {
         }
         TokenSinkResult::Continue
     }
+}
+
+pub(crate) fn read_template(args: &Args) -> Element {
+    let template = match std::fs::read_to_string(&args.path) {
+        Ok(template) => template,
+        Err(e) => abort!(args.path_span, "Failed to read template file at {}: {}", args.path, e),
+    };
+    let mut html_parts = Vec::new();
+    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new(), args: &args };
+    let mut html_tokenizer = Tokenizer::new(html_sink, TokenizerOpts::default());
+    let mut buffer_queue = BufferQueue::new();
+    buffer_queue.push_back(template.into());
+    let _  = html_tokenizer.feed(&mut buffer_queue);
+    html_tokenizer.end();
+    let mut root = Element {
+        name: "".to_string(),
+        open_attrs: Vec::new(),
+        close_attrs: Vec::new(),
+        self_closing: false,
+        children: html_parts,
+    };
+    root.clean_text();
+    root
 }

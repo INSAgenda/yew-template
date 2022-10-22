@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.1.1\n"
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[value]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "Yoo man [value2]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[opt_value]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[opt_value2]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "Thank you, [names_iter]!"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[person.first_name] [person.last_name]"
+msgstr ""
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "You have a password!"
+msgstr "Vous avez un mot de passe !"
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "You have no password..."
+msgstr "Vous n'avez pas de mot de passe..."
+
+#: src/unknown.rs:0
+msgctxt "context unknown"
+msgid "[zebi]"
+msgstr ""

@@ -393,11 +393,13 @@ mod args;
 mod codegen;
 mod sink;
 mod html_element;
+mod i18n;
 pub(crate) use {
     crate::args::*,
     crate::codegen::*,
     crate::sink::*,
     crate::html_element::*,
+    crate::i18n::*,
     proc_macro_error::*,
 };
 
@@ -412,8 +414,8 @@ pub(crate) use {
 #[proc_macro_error]
 pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
-    //println!("{args:?}");
-
-    let code = generate_code(args);
+    let root = read_template(&args);
+    generate_pot(&root);
+    let code = generate_code(root, args);
     code.parse().unwrap()
 }
