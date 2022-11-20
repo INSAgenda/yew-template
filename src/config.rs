@@ -11,6 +11,10 @@ pub struct Config {
 
     /// Where to look for locales (relative to crate root)
     pub locale_directory: String,
+
+    /// Rust code to evaluate as locale. Should evaluate to a &str.
+    /// If will be inserted in generated code like this: `match locale_code {`.
+    pub locale_code: String,
 }
 
 impl Default for Config {
@@ -19,6 +23,7 @@ impl Default for Config {
             auto_default: false,
             template_directory: String::from("./"),
             locale_directory: String::from("./locales/"),
+            locale_code: String::from("locale.as_str()"),
         }
     }
 }
@@ -47,6 +52,7 @@ pub fn read_config() -> Config {
     Config::default()
 }
 
+#[cfg(feature = "config")]
 #[test]
 fn print_default_config() {
     println!("{}", toml::to_string_pretty(&Config::default()).unwrap());

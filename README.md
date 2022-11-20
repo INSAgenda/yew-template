@@ -352,6 +352,8 @@ When done translating, put your `.po` files in the locale directory. Support for
 
 In order to select the locale to be rendered at runtime, you need to pass a `locale` variable to template-html macro calls. This variable will be matched against the filenames of the `.po` files in the locale directory (exluding the `.po` extension). If no match is found, the string will be left as it appears in your template.
 
+Instead of using a `locale` variable, you can decide to evaluate any Rust expression. See the `locale_code` option in the [config](#config) section.
+
 ## Config
 
 You can specify various settings in a `yew-template.toml` file at the crate root.
@@ -368,6 +370,10 @@ template_directory = './'
 
 # Where to look for locales (relative to crate root)
 locale_directory = './locales/'
+
+# Rust code to evaluate as locale. Should evaluate to a &str.
+# If will be inserted in generated code like this: `match locale_code {`.
+locale_code = 'locale.as_str()'
 ```
 
 ## Features
