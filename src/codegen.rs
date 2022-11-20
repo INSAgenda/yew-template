@@ -8,6 +8,21 @@ pub(crate) enum TextPart {
     Variable(String),
 }
 
+impl TextPart {
+    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+        match self {
+            TextPart::Literal(t) => format!("{{\"{t}\"}}"),
+            TextPart::Variable(id) => {
+                let mut value = args.get_val(id, opts, iters, args).to_string();
+                if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
+                    value = format!("macro_produced_{id}");
+                };
+                format!("{{{value}}}")
+            },
+        }
+    }
+}
+
 pub(crate) fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
     let mut parts = Vec::new();
 
@@ -86,16 +101,7 @@ trait HackTraitVecTextPart {
 
 impl HackTraitVecTextPart for Vec<TextPart> {
     fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-        self.iter().map(|p| match p {
-            TextPart::Literal(t) => format!("{{\"{t}\"}}"),
-            TextPart::Variable(id) => {
-                let mut value = args.get_val(id, opts, iters, args).to_string();
-                if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
-                    value = format!("macro_produced_{id}");
-                };
-                format!("{{{value}}}")
-            },
-        }).collect::<Vec<_>>().join("")
+        self.iter().map(|p| p.generate_code(opts, iters, args)).collect::<Vec<_>>().join("")
     }
 }
 
@@ -201,10 +207,17 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             content
         }
         HtmlPart::Text(text) => {
+            // If it's only a single variable then no need to translate
+            let text_parts = parse_text_part(&text, args);
+            if matches!(text_parts.as_slice(), &[TextPart::Variable(_)]) {
+                return text_parts[0].generate_code(opts, iters, args);
+            }
+
+            // Get localized texts
             #[cfg(feature = "i18n")]
             let translations = args.catalog.translate_text(&text, args);
             #[cfg(not(feature = "i18n"))]
-            let translations = vec![(String::new(), parse_text_part(&text, args))];
+            let translations = vec![(String::new(), text_parts)];
 
             // Translations are disabled
             if translations.len() == 1 {

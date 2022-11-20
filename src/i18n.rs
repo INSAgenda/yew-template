@@ -17,11 +17,19 @@ impl Element {
         let mut translatables = Vec::new();
         for child in &self.children {
             match &child.part {
-                HtmlPart::Text(text) => translatables.push(Translatable {
-                    original: text.to_string(),
-                    origin: (args.path.trim_start_matches("./").to_owned(), child.line),
-                    context: context_from_path(&args.path).to_string(),
-                }),
+                HtmlPart::Text(text) => {
+                    // Ignore the text if it's only a variable
+                    let text_parts = parse_text_part(text, args);
+                    if matches!(text_parts.as_slice(), &[TextPart::Variable(_)]) {
+                        continue;
+                    }
+        
+                    translatables.push(Translatable {
+                        original: text.to_string(),
+                        origin: (args.path.trim_start_matches("./").to_owned(), child.line),
+                        context: context_from_path(&args.path).to_string(),
+                    })
+                },
                 HtmlPart::Element(el) => translatables.append(&mut el.get_translatables(args)),
             }
         }
