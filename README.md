@@ -47,6 +47,7 @@ let html = yew::html! {
 - [Iterators](#iterators)
 - [Minimizing bloat](#minimizing-bloat)
 - [Virtual elements](#virtual-elements)
+- [Config](#config)
 - [Features](#features)
 
 ### Variables
@@ -304,7 +305,7 @@ let name = "World";
 let html = template_html!("templates/hello.html", ...);
 ```
 
-This behavior is disabled by default because undefined variables are often errors.
+This behavior is disabled by default because missing variables are often mistakes. If you want to enable it without have to add `...` to every macro call, please set `auto_default` to true in your [config](#config).
 
 ### Virtual elements
 
@@ -336,6 +337,24 @@ And Yew will produce the following HTML:
 
 ```html
 John
+```
+
+## Config
+
+You can specify various settings in a `yew-template.toml` file at the crate root.
+This requires the `config` cargo feature to be enabled (it is enabled by default).
+
+This is the default configuration:
+
+```toml
+# Whether to attempt to capture local variables instead of aborting when arguments required by the template are missing.
+auto_default = false
+
+# Where to look for templates (relative to crate root)
+template_directory = './'
+
+# Where to look for locales (relative to crate root)
+locale_directory = './locales/'
 ```
 
 ## Features

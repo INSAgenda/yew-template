@@ -3,22 +3,20 @@ use crate::*;
 #[derive(Debug)]
 #[cfg_attr(feature = "config", derive(serde::Serialize, serde::Deserialize))]
 pub struct Config {
-    /// When arguments required by the template are missing, attempt to use the local variable with the same name instead of aborting.
+    /// Whether to attempt to capture local variables instead of aborting when arguments required by the template are missing.
     pub auto_default: bool,
 
-    /// Path to the directory containing the templates.
-    /// Expected to be relative to the crate root.
+    /// Where to look for templates (relative to crate root)
     pub template_directory: String,
 
-    /// Path to the directory containing PO files.
-    /// The name (without extension) of these files will be used to match the locale variable.
+    /// Where to look for locales (relative to crate root)
     pub locale_directory: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            auto_default: true,
+            auto_default: false,
             template_directory: String::from("./"),
             locale_directory: String::from("./locales/"),
         }
@@ -47,4 +45,9 @@ pub fn read_config() -> Config {
         abort_call_site!("yew-template.toml found but the \"config\" feature is not enabled");
     }
     Config::default()
+}
+
+#[test]
+fn print_default_config() {
+    println!("{}", toml::to_string_pretty(&Config::default()).unwrap());
 }
