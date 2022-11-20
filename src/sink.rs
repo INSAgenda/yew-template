@@ -58,7 +58,7 @@ pub(crate) fn read_template(args: &Args) -> Element {
         Err(e) => abort!(args.path_span, "Failed to read template file at {}: {}", args.path, e),
     };
     let mut html_parts = Vec::new();
-    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new(), args: &args };
+    let html_sink = HtmlSink { html_parts: &mut html_parts, opened_elements: Vec::new(), args };
     let mut html_tokenizer = Tokenizer::new(html_sink, TokenizerOpts::default());
     let mut buffer_queue = BufferQueue::new();
     buffer_queue.push_back(template.into());

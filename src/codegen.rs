@@ -1,8 +1,5 @@
-use std::path::Path;
-
-use html5ever::tokenizer::{Tokenizer, TokenizerOpts, BufferQueue};
 use proc_macro::TokenTree;
-use string_tools::{get_all_between_strict, get_all_before, get_all_before_strict};
+use string_tools::get_all_between_strict;
 use crate::*;
 
 fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
