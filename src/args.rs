@@ -139,7 +139,7 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
     }
 
     // TODO
-    let catalog = Catalog::new(vec![String::from("locales/fr.mo")], String::from("en"));
+    let catalog = Catalog::new(&["fr"], "en");
 
     Args { path, path_span, vals, auto_default, catalog }
 }

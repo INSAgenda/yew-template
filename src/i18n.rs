@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use poreader::{PoParser, Message};
 use string_tools::get_all_before_strict;
 
 use crate::*;
@@ -70,41 +72,51 @@ fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
 
 #[derive(Debug)]
 pub(crate) struct Catalog {
-    catalogs: Vec<(String, gettext::Catalog)>,
+    catalogs: HashMap<String, HashMap<(String, String), String>>,
     default_language: String,
 }
 
 impl Catalog {
-    pub(crate) fn new(languages: Vec<String>, default_language: String) -> Self {
-        let mut catalogs = Vec::new();
+    pub(crate) fn new(languages: &[&str], default_language: &str) -> Self {
+        let mut catalogs = HashMap::new();
         for language in languages {
-            let f = std::fs::File::open("locales/fr.mo").expect("could not open the catalog");
-            let catalog = gettext::Catalog::parse(f).expect("could not parse the catalog");
-            println!("{:#?}", catalog);
-            catalogs.push((language, catalog));
+            let file = std::fs::File::open(format!("locales/{language}.po")).unwrap_or_else(|_| panic!("could not open the {language} catalog"));
+            let parser = PoParser::new();
+            let reader = parser.parse(file).unwrap_or_else(|_| panic!("could not parse the {language} catalog"));
+
+            let mut items = HashMap::new();
+            for unit in reader {
+                let Ok(unit) = unit else {
+                    eprintln!("WARNING: Invalid unit in the {language} catalog");
+                    continue;
+                };
+
+                let context = unit.context().unwrap_or("").to_string();
+                if let Message::Simple { id, text: Some(text) } = unit.message() {
+                    items.insert((context, id.to_owned()), text.to_owned());
+                }
+            }
+        
+            catalogs.insert(language.to_string(), items);
         }
     
         Self {
             catalogs,
-            default_language
+            default_language: default_language.to_string(),
         }
-    }
-
-    pub(crate) fn is_empty(&self) -> bool {
-        self.catalogs.is_empty()
     }
 
     pub(crate) fn translate_text(&self, text: &str, args: &Args) -> Vec<(String, Vec<TextPart>)> {
         let context = String::from("context unknown");
-        let id = format!("{context}\u{4}{text}");
+        let context_and_text = (context.clone(), text.to_string());
 
         let mut translations = Vec::new();
         translations.push((self.default_language.clone(), parse_text_part(text, args)));
         for (language, catalog) in &self.catalogs {
-            let mut translated_text = catalog.gettext(&id);
-            if translated_text == id {
-                translated_text = text;
-            }
+            let Some(translated_text) = catalog.get(&context_and_text) else {
+                eprintln!("WARNING: Missing translation for text {text:?} with context {context:?} in language {language}");
+                continue;
+            };
             let translated_parts = parse_text_part(translated_text, args);
             translations.push((language.to_owned(), translated_parts));
         }
