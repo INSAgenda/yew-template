@@ -9,7 +9,7 @@
     <img alt="docs.rs" src="https://img.shields.io/docsrs/yew-template">
 </p>
 
-<p align="center">A crate for using separate HTML files as <a href="https://yew.rs/">Yew</a> objects.</p>
+<p align="center">A crate for using separate HTML files as <a href="https://yew.rs/">Yew</a> objects, with support for seamless localization.</p>
 
 ## Getting Started
 

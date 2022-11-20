@@ -1,7 +1,8 @@
 [package]
 name = "yew-template"
-description = "This crate allows you to separate your HTML from your Rust code when using Yew."
+description = "A crate for using separate HTML files as Yew objects, with support for seamless localization."
 authors = ["Mubelotix <mubelotix@gmail.com>", "INSAgenda developers <devs@insagenda.fr>"]
+categories = ["localization", "internationalization", "template-engine", "web-programming", "wasm"]
 readme = "README.md"
 version = "0.6.3"
 edition = "2021"
