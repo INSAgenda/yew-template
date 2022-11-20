@@ -16,7 +16,7 @@ impl Element {
                 HtmlPart::Text(text) => translatables.push(Translatable {
                     original: text.to_string(),
                     origin: (args.path.trim_start_matches("./").to_owned(), child.line),
-                    context: String::from("context unknown"),
+                    context: format!("in {}", args.path.split('/').last().unwrap_or_default().trim_end_matches(".html")),
                 }),
                 HtmlPart::Element(el) => translatables.append(&mut el.get_translatables(args)),
             }
