@@ -34,7 +34,7 @@ pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     let root = read_template(&args);
     #[cfg(feature = "i18n")]
-    generate_pot(&args.config, &root);
+    generate_pot(&root, &args);
     let code = generate_code(root, args);
     code.parse().unwrap()
 }

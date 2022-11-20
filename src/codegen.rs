@@ -124,7 +124,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                 f_close_attrs.insert(0, ' ');
             }
             let name = el.name;
-            let mut content = el.children.into_iter().map(|p| html_part_to_yew_string(p, depth + 1, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
+            let mut content = el.children.into_iter().map(|p| html_part_to_yew_string(p.part, depth + 1, &mut inner_opts, &mut inner_iters, args)).collect::<Vec<_>>().join("");
             inner_opts.sort();
             inner_opts.dedup();
             inner_iters.sort();

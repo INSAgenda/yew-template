@@ -9,16 +9,16 @@ pub struct Translatable {
 }
 
 impl Element {
-    pub(crate) fn get_translatables(&self) -> Vec<Translatable> {
+    pub(crate) fn get_translatables(&self, args: &Args) -> Vec<Translatable> {
         let mut translatables = Vec::new();
         for child in &self.children {
-            match child {
+            match &child.part {
                 HtmlPart::Text(text) => translatables.push(Translatable {
                     original: text.to_string(),
-                    origin: (String::from("src/unknown.rs"), 0),
+                    origin: (args.path.trim_start_matches("./").to_owned(), child.line),
                     context: String::from("context unknown"),
                 }),
-                HtmlPart::Element(el) => translatables.append(&mut el.get_translatables()),
+                HtmlPart::Element(el) => translatables.append(&mut el.get_translatables(args)),
             }
         }
         translatables
@@ -31,20 +31,20 @@ impl Translatable {
     }
 }
 
-pub(crate) fn generate_pot(config: &Config, root: &Element) {
-    let path = Path::new(&config.locale_directory);
+pub(crate) fn generate_pot(root: &Element, args: &Args) {
+    let path = Path::new(&args.config.locale_directory);
     if !path.exists() {
         return;
     }
 
     // Delete template.pot if it hasn't been modified too recently (otherwise keep the data)
-    let mut data = match std::fs::File::open(format!("{}template.pot", config.locale_directory)) {
+    let mut data = match std::fs::File::open(format!("{}template.pot", args.config.locale_directory)) {
         Ok(mut file) => {
             let metadata = file.metadata().unwrap();
             let mut data = String::new();
             file.read_to_string(&mut data).unwrap();
             if metadata.modified().unwrap().elapsed().unwrap().as_secs() > 120 {
-                std::fs::remove_file(format!("{}template.pot", config.locale_directory)).unwrap();
+                std::fs::remove_file(format!("{}template.pot", args.config.locale_directory)).unwrap();
                 String::new()
             } else {
                 data
@@ -54,7 +54,7 @@ pub(crate) fn generate_pot(config: &Config, root: &Element) {
     };
 
     // Append new translatables
-    let translatables = root.get_translatables();
+    let translatables = root.get_translatables(args);
     for translatable in translatables {
         let pot_part = translatable.generate_pot_part();
         if !data.contains(&pot_part) {
@@ -63,10 +63,10 @@ pub(crate) fn generate_pot(config: &Config, root: &Element) {
             data.push('\n');
         }
     }
-    std::fs::write(format!("{}template.pot", config.locale_directory), data).unwrap();
+    std::fs::write(format!("{}template.pot", args.config.locale_directory), data).unwrap();
 
     // Make sure the file is in .gitignore
-    let gitignore_path = format!("{}.gitignore", config.locale_directory);
+    let gitignore_path = format!("{}.gitignore", args.config.locale_directory);
     let path = Path::new(&gitignore_path);
     if !path.exists() {
         std::fs::write(gitignore_path, "template.pot\n").unwrap();

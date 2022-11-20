@@ -2,7 +2,7 @@ use html5ever::{tokenizer::{TokenSink, Token as HtmlToken, TokenSinkResult, TagK
 use crate::*;
 
 pub(crate) struct HtmlSink<'a> {
-    pub(crate) html_parts: &'a mut Vec<HtmlPart>,
+    pub(crate) html_parts: &'a mut Vec<HtmlPartWithLine>,
     pub(crate) opened_elements: Vec<Element>,
     pub(crate) args: &'a Args,
 }
@@ -23,8 +23,8 @@ impl<'a> TokenSink for HtmlSink<'a> {
                     };
                     match element.self_closing {
                         true => match self.opened_elements.last_mut() {
-                            Some(container) => container.children.push(HtmlPart::Element(element)),
-                            None => self.html_parts.push(HtmlPart::Element(element)),
+                            Some(container) => container.children.push(HtmlPartWithLine { part: HtmlPart::Element(element), line: line_number as usize }),
+                            None => self.html_parts.push(HtmlPartWithLine { part: HtmlPart::Element(element), line: line_number as usize }),
                         },
                         false => self.opened_elements.push(element)
                     }
@@ -36,14 +36,14 @@ impl<'a> TokenSink for HtmlSink<'a> {
                     }
                     element.close_attrs = tag.attrs.into_iter().map(|a| (a.name.local.to_string(), a.value.to_string())).collect();
                     match self.opened_elements.last_mut() {
-                        Some(container) => container.children.push(HtmlPart::Element(element)),
-                        None => self.html_parts.push(HtmlPart::Element(element)),
+                        Some(container) => container.children.push(HtmlPartWithLine { part: HtmlPart::Element(element), line: line_number as usize }),
+                        None => self.html_parts.push(HtmlPartWithLine { part: HtmlPart::Element(element), line: line_number as usize }),
                     }
                 },
             },
             HtmlToken::CharacterTokens(text) => match self.opened_elements.last_mut() {
-                Some(container) => container.children.push(HtmlPart::Text(text.to_string())),
-                None => self.html_parts.push(HtmlPart::Text(text.to_string())),
+                Some(container) => container.children.push(HtmlPartWithLine { part: HtmlPart::Text(text.to_string()), line: line_number as usize }),
+                None => self.html_parts.push(HtmlPartWithLine { part: HtmlPart::Text(text.to_string()), line: line_number as usize }),
             },
             HtmlToken::NullCharacterToken | HtmlToken::CommentToken(_) | HtmlToken::EOFToken | HtmlToken::DoctypeToken(_) => (),
             HtmlToken::ParseError(e) => abort!(self.args.path_span, format!("Failed to parse template: {e} at line {line_number}")),
