@@ -62,7 +62,7 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
                 abort!(lit.span(), "Expected a string literal being the path to the template file");
             }
             let path = path[1..path.len() - 1].to_string();
-            (format!("{}{}", config.template_folder, path), lit.span())
+            (format!("{}{}", config.template_directory, path), lit.span())
         },
         Some(t) => abort!(t.span(), "First parameter should be a string literal of the path to the template file"),
         None => abort_call_site!("Please specify the path to the template file as the first parameter"),
@@ -142,7 +142,7 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
     }
 
     // TODO
-    let catalog = Catalog::new(&["fr"], "en");
+    let catalog = Catalog::new(config.locale_directory);
 
     Args { path, path_span, vals, auto_default, catalog }
 }

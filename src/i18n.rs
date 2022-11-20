@@ -73,36 +73,46 @@ fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
 #[derive(Debug)]
 pub(crate) struct Catalog {
     catalogs: HashMap<String, HashMap<(String, String), String>>,
-    default_language: String,
 }
 
 impl Catalog {
-    pub(crate) fn new(languages: &[&str], default_language: &str) -> Self {
+    pub(crate) fn new(locale_directory: String) -> Self {
+        // Read all PO files in the locale_directory
         let mut catalogs = HashMap::new();
-        for language in languages {
-            let file = std::fs::File::open(format!("locales/{language}.po")).unwrap_or_else(|_| panic!("could not open the {language} catalog"));
+        let read_dir = match std::fs::read_dir(locale_directory) {
+            Ok(read_dir) => read_dir,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Self { catalogs },
+            Err(_) => abort_call_site!("Failed to read locale directory"),
+        };
+        for entry in read_dir {
+            let entry = entry.expect("Error while reading locale directory");
+            let path = entry.path();
+            if path.extension().map(|ext| ext != "po").unwrap_or(true) {
+                continue;
+            }
+
+            let locale = path.file_name().expect("no file stem").to_str().expect("cannot convert file stem").trim_end_matches(".po").to_string();
+            let file = std::fs::File::open(path).unwrap_or_else(|_| panic!("could not open the {locale} catalog"));
             let parser = PoParser::new();
-            let reader = parser.parse(file).unwrap_or_else(|_| panic!("could not parse the {language} catalog"));
+            let reader = parser.parse(file).unwrap_or_else(|_| panic!("could not parse the {locale} catalog"));
 
             let mut items = HashMap::new();
             for unit in reader {
                 let Ok(unit) = unit else {
-                    eprintln!("WARNING: Invalid unit in the {language} catalog");
+                    eprintln!("WARNING: Invalid unit in the {locale} catalog");
                     continue;
                 };
-
                 let context = unit.context().unwrap_or("").to_string();
                 if let Message::Simple { id, text: Some(text) } = unit.message() {
                     items.insert((context, id.to_owned()), text.to_owned());
                 }
             }
         
-            catalogs.insert(language.to_string(), items);
+            catalogs.insert(locale.to_string(), items);
         }
     
         Self {
             catalogs,
-            default_language: default_language.to_string(),
         }
     }
 
@@ -111,7 +121,7 @@ impl Catalog {
         let context_and_text = (context.clone(), text.to_string());
 
         let mut translations = Vec::new();
-        translations.push((self.default_language.clone(), parse_text_part(text, args)));
+        translations.push((String::new(), parse_text_part(text, args)));
         for (language, catalog) in &self.catalogs {
             let Some(translated_text) = catalog.get(&context_and_text) else {
                 eprintln!("WARNING: Missing translation for text {text:?} with context {context:?} in language {language}");

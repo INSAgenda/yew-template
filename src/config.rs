@@ -7,14 +7,19 @@ pub struct Config {
 
     /// Path to the directory containing the templates.
     /// Expected to be relative to the crate root.
-    pub template_folder: String,
+    pub template_directory: String,
+
+    /// Path to the directory containing PO files.
+    /// The name (without extension) of these files will be used to match the locale variable.
+    pub locale_directory: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             auto_default: true,
-            template_folder: String::new(),
+            template_directory: String::from("./"),
+            locale_directory: String::from("./locales/"),
         }
     }
 }
@@ -28,8 +33,8 @@ pub fn read_config() -> Config {
     let Ok(mut config) = toml::from_str::<Config>(&data) else {
         abort_call_site!("Failed to parse yew-template.toml");
     };
-    if !config.template_folder.is_empty() && !config.template_folder.ends_with('/') {
-        config.template_folder.push('/');
+    if !config.template_directory.is_empty() && !config.template_directory.ends_with('/') {
+        config.template_directory.push('/');
     }
 
     config
