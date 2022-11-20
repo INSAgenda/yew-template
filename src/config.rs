@@ -40,6 +40,9 @@ pub fn read_config() -> Config {
     if !config.template_directory.is_empty() && !config.template_directory.ends_with('/') {
         config.template_directory.push('/');
     }
+    if !config.locale_directory.is_empty() && !config.locale_directory.ends_with('/') {
+        config.locale_directory.push('/');
+    }
 
     config
 }

@@ -219,9 +219,9 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                     break;
                 }
             }
+            let locale_code = &args.config.locale_code;
             if all_are_single_literal {
                 let mut result = String::new();
-                let locale_code = &args.config.locale_code;
                 result.push_str(&format!("\n{tabs}{{match {locale_code} {{\n"));
                 for (i, (locale, translation)) in translations.iter().enumerate().rev() {
                     let arm = match i == 0 {
@@ -240,7 +240,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
 
             // It's a complex case
             let mut result = String::new();
-            result.push_str(&format!("\n{tabs}{{match locale.as_str() {{\n"));
+            result.push_str(&format!("\n{tabs}{{match {locale_code} {{\n"));
             for (i, (locale, translation)) in translations.iter().enumerate().rev() {
                 let arm = match i == 0 {
                     true => String::from("_"),
