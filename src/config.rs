@@ -1,5 +1,6 @@
 use crate::*;
 
+#[derive(Debug)]
 #[cfg_attr(feature = "config", derive(serde::Serialize, serde::Deserialize))]
 pub struct Config {
     /// When arguments required by the template are missing, attempt to use the local variable with the same name instead of aborting.

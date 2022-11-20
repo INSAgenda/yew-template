@@ -10,6 +10,7 @@ pub(crate) struct Args {
     pub(crate) catalog: Catalog,
     auto_default: bool,
     vals: HashMap<String, TokenTree>,
+    pub(crate) config: Config,
 }
 
 impl Args {
@@ -142,7 +143,7 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
     }
 
     // TODO
-    let catalog = Catalog::new(config.locale_directory);
+    let catalog = Catalog::new(&config.locale_directory);
 
-    Args { path, path_span, vals, auto_default, catalog }
+    Args { path, path_span, vals, auto_default, catalog, config }
 }

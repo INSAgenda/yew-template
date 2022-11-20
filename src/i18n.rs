@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 use poreader::{PoParser, Message};
 use string_tools::get_all_before_strict;
 
@@ -33,10 +33,15 @@ impl Translatable {
     }
 }
 
-pub(crate) fn generate_pot(root: &Element) {
+pub(crate) fn generate_pot(config: &Config, root: &Element) {
+    let path = Path::new(&config.locale_directory);
+    if !path.exists() {
+        return;
+    }
+
     let translatables = root.get_translatables();
     let pot = translatables.iter().map(|t| t.generate_pot_part()).collect::<Vec<_>>().join("\n\n");
-    std::fs::write("test.pot", pot).unwrap();
+    std::fs::write(format!("{}template.pot", config.locale_directory), pot).unwrap();
 }
 
 #[derive(Debug)]
@@ -76,7 +81,7 @@ pub(crate) struct Catalog {
 }
 
 impl Catalog {
-    pub(crate) fn new(locale_directory: String) -> Self {
+    pub(crate) fn new(locale_directory: &str) -> Self {
         // Read all PO files in the locale_directory
         let mut catalogs = HashMap::new();
         let read_dir = match std::fs::read_dir(locale_directory) {
