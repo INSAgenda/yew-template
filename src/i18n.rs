@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, io::Read};
 use poreader::{PoParser, Message};
 use string_tools::get_all_before_strict;
 
@@ -39,9 +39,40 @@ pub(crate) fn generate_pot(config: &Config, root: &Element) {
         return;
     }
 
+    // Delete template.pot if it hasn't been modified too recently (otherwise keep the data)
+    let mut data = match std::fs::File::open(format!("{}template.pot", config.locale_directory)) {
+        Ok(mut file) => {
+            let metadata = file.metadata().unwrap();
+            let mut data = String::new();
+            file.read_to_string(&mut data).unwrap();
+            if metadata.modified().unwrap().elapsed().unwrap().as_secs() > 120 {
+                std::fs::remove_file(format!("{}template.pot", config.locale_directory)).unwrap();
+                String::new()
+            } else {
+                data
+            }
+        }
+        _ => String::new()
+    };
+
+    // Append new translatables
     let translatables = root.get_translatables();
-    let pot = translatables.iter().map(|t| t.generate_pot_part()).collect::<Vec<_>>().join("\n\n");
-    std::fs::write(format!("{}template.pot", config.locale_directory), pot).unwrap();
+    for translatable in translatables {
+        let pot_part = translatable.generate_pot_part();
+        if !data.contains(&pot_part) {
+            data.push('\n');
+            data.push_str(&pot_part);
+            data.push('\n');
+        }
+    }
+    std::fs::write(format!("{}template.pot", config.locale_directory), data).unwrap();
+
+    // Make sure the file is in .gitignore
+    let gitignore_path = format!("{}.gitignore", config.locale_directory);
+    let path = Path::new(&gitignore_path);
+    if !path.exists() {
+        std::fs::write(gitignore_path, "template.pot\n").unwrap();
+    }
 }
 
 #[derive(Debug)]
