@@ -16,6 +16,12 @@ string-tools = "0.1"
 html5ever = "0.26"
 proc-macro-error = "1.0"
 poreader = "1.1"
+toml = { version = "0.5", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[features]
+default = ["config"]
+config = ["toml", "serde"]
 
 [dev-dependencies]
 yew = "0.19"

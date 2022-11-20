@@ -49,6 +49,8 @@ impl Args {
 }
 
 pub(crate) fn parse_args(args: TokenStream) -> Args {
+    let config = config::read_config();
+    
     let mut tokens = args.into_iter().peekable();
     let _ = tokens.peek();
 
@@ -59,7 +61,8 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
             if !path.starts_with('"') || !path.ends_with('"') {
                 abort!(lit.span(), "Expected a string literal being the path to the template file");
             }
-            (path[1..path.len() - 1].to_string(), lit.span())
+            let path = path[1..path.len() - 1].to_string();
+            (format!("{}{}", config.template_folder, path), lit.span())
         },
         Some(t) => abort!(t.span(), "First parameter should be a string literal of the path to the template file"),
         None => abort_call_site!("Please specify the path to the template file as the first parameter"),
@@ -67,7 +70,7 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
 
     let mut vals = HashMap::new();
     let mut comma_passed = false;
-    let mut auto_default = true;
+    let mut auto_default = config.auto_default;
     loop {
         // Check comma
         if !comma_passed {

@@ -394,12 +394,14 @@ mod codegen;
 mod sink;
 mod html_element;
 mod i18n;
+mod config;
 pub(crate) use {
     crate::args::*,
     crate::codegen::*,
     crate::sink::*,
     crate::html_element::*,
     crate::i18n::*,
+    crate::config::*,
     proc_macro_error::*,
 };
 
