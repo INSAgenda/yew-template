@@ -47,6 +47,7 @@ let html = yew::html! {
 - [Iterators](#iterators)
 - [Minimizing bloat](#minimizing-bloat)
 - [Virtual elements](#virtual-elements)
+- [Localization](#localization)
 - [Config](#config)
 - [Features](#features)
 
@@ -338,6 +339,18 @@ And Yew will produce the following HTML:
 ```html
 John
 ```
+
+### Localization
+
+Yew-template supports localization. It is able to extract localization data from `.po` files and automatically embed them in the generated code. Enabling this feature is as simple as putting `.po` files in a directory.
+
+The `i18n` cargo feature needs to be enabled (it is enabled by default).
+
+By default, the locale directory is set to `locales`. You can change this by setting `locale_directory` in your [config](#config). Yew template will automatically generate an up-to-date `.pot` file in this directory. Use it in your translation software as a template to generate `.po` files.
+
+When done translating, put your `.po` files in the locale directory. Support for the added locales will automatically be enabled.
+
+In order to select the locale to be rendered at runtime, you need to pass a `locale` variable to template-html macro calls. This variable will be matched against the filenames of the `.po` files in the locale directory (exluding the `.po` extension). If no match is found, the string will be left as it appears in your template.
 
 ## Config
 
