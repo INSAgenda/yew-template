@@ -9,7 +9,7 @@
     <img alt="docs.rs" src="https://img.shields.io/docsrs/yew-template">
 </p>
 
-<p align="center">A crate for separating HTML and Rust code when using <a href="https://yew.rs/">Yew</a>.</p>
+<p align="center">A crate for using separate HTML files as <a href="https://yew.rs/">Yew</a> objects.</p>
 
 ## Getting Started
 
@@ -47,6 +47,7 @@ let html = yew::html! {
 - [Iterators](#iterators)
 - [Minimizing bloat](#minimizing-bloat)
 - [Virtual elements](#virtual-elements)
+- [Features](#features)
 
 ### Variables
 
@@ -336,6 +337,12 @@ And Yew will produce the following HTML:
 ```html
 John
 ```
+
+## Features
+
+All features are enabled by default. There currently two features:
+- [`config`](#config): Allows you to use `yew-template.toml` settings
+- [`i18n`](#localization): Enables support for localization
 
 ## Notes
 
