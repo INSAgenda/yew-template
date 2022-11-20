@@ -8,6 +8,10 @@ pub struct Translatable {
     context: String,
 }
 
+fn context_from_path(path: &str) -> &str {
+    path.split('/').last().unwrap_or_default().trim_end_matches(".html")
+}
+
 impl Element {
     pub(crate) fn get_translatables(&self, args: &Args) -> Vec<Translatable> {
         let mut translatables = Vec::new();
@@ -16,7 +20,7 @@ impl Element {
                 HtmlPart::Text(text) => translatables.push(Translatable {
                     original: text.to_string(),
                     origin: (args.path.trim_start_matches("./").to_owned(), child.line),
-                    context: format!("in {}", args.path.split('/').last().unwrap_or_default().trim_end_matches(".html")),
+                    context: context_from_path(&args.path).to_string(),
                 }),
                 HtmlPart::Element(el) => translatables.append(&mut el.get_translatables(args)),
             }
@@ -120,7 +124,7 @@ impl Catalog {
     }
 
     pub(crate) fn translate_text(&self, text: &str, args: &Args) -> Vec<(String, Vec<TextPart>)> {
-        let context = String::from("context unknown");
+        let context = context_from_path(&args.path).to_string();
         let context_and_text = (context.clone(), text.to_string());
 
         let mut translations = Vec::new();
