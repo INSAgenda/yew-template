@@ -393,6 +393,7 @@ mod args;
 mod codegen;
 mod sink;
 mod html_element;
+#[cfg(feature = "i18n")]
 mod i18n;
 mod config;
 pub(crate) use {
@@ -400,10 +401,11 @@ pub(crate) use {
     crate::codegen::*,
     crate::sink::*,
     crate::html_element::*,
-    crate::i18n::*,
     crate::config::*,
     proc_macro_error::*,
 };
+#[cfg(feature = "i18n")]
+pub(crate) use crate::i18n::*;
 
 /// Reads a file and replaces the variables it contains with the supplied values. Produces a Yew html! macro invocation.
 /// 
@@ -417,6 +419,7 @@ pub(crate) use {
 pub fn template_html(args: TokenStream) -> TokenStream {
     let args = parse_args(args);
     let root = read_template(&args);
+    #[cfg(feature = "i18n")]
     generate_pot(&args.config, &root);
     let code = generate_code(root, args);
     code.parse().unwrap()

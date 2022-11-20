@@ -1,6 +1,37 @@
 use proc_macro::TokenTree;
-use string_tools::get_all_between_strict;
+use string_tools::{get_all_between_strict, get_all_before_strict};
 use crate::*;
+
+#[derive(Debug)]
+pub(crate) enum TextPart {
+    Literal(String),
+    Variable(String),
+}
+
+pub(crate) fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
+    let mut parts = Vec::new();
+
+    while let Some(text) = get_all_before_strict(s, "[") {
+        s = &s[text.len() + 1..];
+        if !text.is_empty() {
+            parts.push(TextPart::Literal(text.to_string()));
+        }
+        if s.is_empty() {
+            break;
+        }
+        let var = match get_all_before_strict(s, "]") {
+            Some(var) => var,
+            None => abort!(args.path_span, "Missing closing bracket in html text"),
+        };
+        s = &s[var.len() + 1..];
+        parts.push(TextPart::Variable(var.to_string()));
+    }
+    if !s.is_empty() {
+        parts.push(TextPart::Literal(s.to_string()));
+    }
+
+    parts
+}
 
 fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
     if name == "opt" || name == "iter" || name == "present-if" {
@@ -170,8 +201,11 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
             content
         }
         HtmlPart::Text(text) => {
+            #[cfg(feature = "i18n")]
             let translations = args.catalog.translate_text(&text, args);
-            
+            #[cfg(not(feature = "i18n"))]
+            let translations = vec![(String::new(), parse_text_part(&text, args))];
+
             // Translations are disabled
             if translations.len() == 1 {
                 return format!("\n{tabs}{}", translations[0].1.generate_code(opts, iters, args));

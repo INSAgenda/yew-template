@@ -7,6 +7,7 @@ use crate::*;
 pub(crate) struct Args {
     pub(crate) path: String,
     pub(crate) path_span: Span,
+    #[cfg(feature = "i18n")]
     pub(crate) catalog: Catalog,
     auto_default: bool,
     vals: HashMap<String, TokenTree>,
@@ -142,8 +143,8 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         vals.insert(id, value);
     }
 
-    // TODO
+    #[cfg(feature = "i18n")]
     let catalog = Catalog::new(&config.locale_directory);
 
-    Args { path, path_span, vals, auto_default, catalog, config }
+    Args { path, path_span, vals, auto_default, #[cfg(feature = "i18n")] catalog, config }
 }

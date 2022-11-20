@@ -1,7 +1,5 @@
 use std::{collections::HashMap, path::Path, io::Read};
 use poreader::{PoParser, Message};
-use string_tools::get_all_before_strict;
-
 use crate::*;
 
 pub struct Translatable {
@@ -73,37 +71,6 @@ pub(crate) fn generate_pot(config: &Config, root: &Element) {
     if !path.exists() {
         std::fs::write(gitignore_path, "template.pot\n").unwrap();
     }
-}
-
-#[derive(Debug)]
-pub(crate) enum TextPart {
-    Literal(String),
-    Variable(String),
-}
-
-fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
-    let mut parts = Vec::new();
-
-    while let Some(text) = get_all_before_strict(s, "[") {
-        s = &s[text.len() + 1..];
-        if !text.is_empty() {
-            parts.push(TextPart::Literal(text.to_string()));
-        }
-        if s.is_empty() {
-            break;
-        }
-        let var = match get_all_before_strict(s, "]") {
-            Some(var) => var,
-            None => abort!(args.path_span, "Missing closing bracket in html text"),
-        };
-        s = &s[var.len() + 1..];
-        parts.push(TextPart::Variable(var.to_string()));
-    }
-    if !s.is_empty() {
-        parts.push(TextPart::Literal(s.to_string()));
-    }
-
-    parts
 }
 
 #[derive(Debug)]
