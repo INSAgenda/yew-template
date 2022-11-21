@@ -33,7 +33,7 @@ impl Element {
                     }
                 }
                 HtmlPart::Element(mut element) => {
-                    current_text = current_text.trim_matches(|c: char| c.is_whitespace() || c == '\n').to_string();
+                    current_text = current_text.trim_matches(|c: char| (c.is_whitespace() || c == '\n') && c != '\u{A0}').to_string();
                     if !current_text.is_empty() {
                         new_children.push(HtmlPartWithLine {
                             part: HtmlPart::Text(current_text),
@@ -47,7 +47,7 @@ impl Element {
                 }
             }
         }
-        current_text = current_text.trim_matches(|c: char| c.is_whitespace() || c == '\n').to_string();
+        current_text = current_text.trim_matches(|c: char| (c.is_whitespace() || c == '\n') && c != '\u{A0}').to_string();
         if !current_text.is_empty() {
             new_children.push(HtmlPartWithLine {
                 part: HtmlPart::Text(current_text),
