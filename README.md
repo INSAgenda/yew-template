@@ -50,6 +50,7 @@ let html = yew::html! {
 - [Localization](#localization)
 - [Config](#config)
 - [Features](#features)
+- [Security Notes](#security-notes)
 
 ### Variables
 
@@ -354,6 +355,8 @@ In order to select the locale to be rendered at runtime, you need to pass a `loc
 
 Instead of using a `locale` variable, you can decide to evaluate any Rust expression. See the `locale_code` option in the [config](#config) section.
 
+Yew-template prevents code injection from localized strings. This is done by escaping double quotes and backslashes. It is **SAFE** to delegate translation to unknown peers. However, these strings can include variable references, which could break compilation if referenced variables are not defined. Yew-template will take care of this issue in the future.
+
 ## Config
 
 You can specify various settings in a `yew-template.toml` file at the crate root.
@@ -382,13 +385,11 @@ All features are enabled by default. There currently two features:
 - [`config`](#config): Allows you to use `yew-template.toml` settings
 - [`i18n`](#localization): Enables support for localization
 
-## Notes
+## Security Notes
 
-- Litteral values are NOT escaped because they come from your code. Using a litteral value of `value closed by quotes" trailing stuff` will cause problems. This will be fixed in a future version. (Note that dynamic string values are always fine and are even escaped by Yew.)
-
-- You can use multiple top-level elements in your html template file.
-
-- While the crate is still experimental, it will be production-ready in a few weeks and will be maintained for the foreseeable future. It will also always support the latest version of Yew.
-
+- It is safe to display all kinds of strings. They will be escaped appropriately, preventing both HTML and Rust injection.
+- Localized strings are harmless in the generated code, but they could break compilation.
+- Do not use untrusted template files.
+- Do not use untrusted `yew-template.toml` files.
 
 License: MIT
