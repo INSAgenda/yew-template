@@ -21,47 +21,40 @@ pub(crate) fn attr_to_code((name, value): (String, String), opts: &mut Vec<Strin
     if name == "opt" || name == "iter" || name == "present-if" {
         return None
     }
-    Some(if value.starts_with('[') && value.ends_with(']') && !value[1..value.len() - 1].chars().any(|c| !c.is_ascii_alphanumeric() && c != '_') {
-        let id = value[1..value.len() - 1].to_string();
-        match args.get_val(&id, opts, iters, args) {
-            TokenTree::Literal(lit) => {
-                let mut value = lit.to_string();
-                if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
-                    value = value[1..value.len() - 1].to_string();
+
+    // Split text into text parts
+    let text_parts = TextPart::parse(&value, args);
+
+    // Generate code
+    match text_parts.len() {
+        0 => None,
+        1 => {
+            let text_part_code = text_parts[0].to_code(opts, iters, args);
+            Some(format!("{name}={text_part_code}"))
+        }
+        _ => {
+            let mut format_literal = String::new();
+            let mut format_args = Vec::new();
+            for text_part in text_parts {
+                match text_part {
+                    TextPart::Literal(t) => format_literal.push_str(&t),
+                    TextPart::Expression(ref id) => {
+                        let mut value = args.get_val(id, opts, iters, args).to_string();
+                        if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
+                            value = value[1..value.len() - 1].to_string();
+                            format_literal.push_str(&value);
+                        } else {
+                            format_literal.push_str("{}");
+                            let text_part_code = text_part.to_code(opts, iters, args);
+                            format_args.push(text_part_code);
+                        }
+                    }
                 }
-                format!("{name}=\"{value}\"")
-            },
-            TokenTree::Ident(ident) if ident.to_string() == "true" || ident.to_string() == "false" => format!("{name}=\"{ident}\""),
-            value => {
-                format!("{name}={{{value}}}")
             }
+            let format_args = format_args.join(", ");
+            Some(format!("{name}={{format!(\"{format_literal}\", {format_args})}}"))
         }
-    } else if value.contains('[') && value.contains(']') {
-        let mut text = value;
-        let mut end = Vec::new();
-        let mut i = 0;
-        while let Some(to_replace) = get_all_between_strict(&text, "[", "]").map(|s| s.to_string()) {
-            let mut value = args.get_val(&to_replace, opts, iters, args).to_string();
-            if to_replace.starts_with("opt_") || to_replace.ends_with("_opt") || to_replace.starts_with("iter_") || to_replace.ends_with("_iter") {
-                value = format!("macro_produced_{to_replace}");
-            };
-    
-            if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
-                value = value[1..value.len() - 1].to_string();
-                text = text.replace(&format!("[{}]", to_replace), &value);
-            } else {
-                text = text.replace(&format!("[{}]", to_replace), &format!("{{attribute_value_{i}}}"));
-                end.push(format!("attribute_value_{i} = {value}"));
-                i += 1;
-            }
-        }
-        match end.is_empty() {
-            true => format!("{name}=\"{text}\""),
-            false => format!("{name}={{ format!(\"{text}\", {}) }}", end.join(", "))
-        }
-    } else {
-        format!("{}=\"{}\"", name, value)
-    })
+    }
 }
 
 /// Turns an HTML element and its children to Rust code for Yew
@@ -176,7 +169,7 @@ pub(crate) fn element_to_code(el: Element, depth: usize, opts: &mut Vec<String>,
 
 /// Turns HTML text to Rust code for Yew
 pub(crate) fn text_to_code(text: String, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-    let tabs = "\t".repeat(depth);
+    let tabs = "    ".repeat(depth);
 
     // If it's only a single variable then no need to translate
     let text_parts = TextPart::parse(&text, args);
