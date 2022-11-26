@@ -3,7 +3,10 @@ use crate::*;
 /// Turns a [TextPart] to Rust code for Yew
 pub(crate) fn text_part_to_code(text_part: &TextPart, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
     match text_part {
-        TextPart::Literal(t) => format!("{{\"{t}\"}}"),
+        TextPart::Literal(t) => {
+            let t = t.replace('\\', "\\\\").replace('"', "\\\"");
+            format!("{{\"{t}\"}}")
+        }
         TextPart::Expression(id) => {
             let mut value = args.get_val(id, opts, iters, args).to_string();
             if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
