@@ -53,7 +53,7 @@ impl Helper {
             removed_offset += (idx_end - idx_start) + 2;
         }
 
-        (max, Helper { glue: value, args: args2 })
+        (max+1, Helper { glue: value, args: args2 })
     }
 
     pub fn to_code(&self, values: Vec<String>) -> String {

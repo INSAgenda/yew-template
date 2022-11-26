@@ -43,7 +43,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         let mut helpers = HashMap::new();
-        helpers.insert(String::from("loud"), vec![Helper::parse("[0].to_string()")].into_iter().collect());
+        helpers.insert(String::from("loud"), vec![Helper::parse("[0].to_uppercase()")].into_iter().collect());
 
         Self {
             auto_default: false,

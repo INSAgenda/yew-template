@@ -14,8 +14,36 @@ pub(crate) struct Args {
     pub(crate) config: Config,
 }
 
+pub enum ValOutput {
+    TokenTree(TokenTree),
+    String(String),
+}
+
+impl std::fmt::Display for ValOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValOutput::TokenTree(tt) => write!(f, "{}", tt),
+            ValOutput::String(s) => write!(f, "{}", s),
+        }
+    }
+}
+
 impl Args {
-    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> TokenTree {
+    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> ValOutput {
+        // Handle helpers
+        let mut parts = id.split(' ').filter(|p| !p.is_empty()).collect::<Vec<_>>();
+        if parts.len() > 1 {
+            let helper_id = parts.remove(0).to_string();
+            let args = parts.into_iter().map(|a| self.get_val(a, opts, iters, args).to_string()).collect::<Vec<_>>();
+            let Some(helpers) = self.config.helpers.get(&helper_id) else {
+                abort!(self.path_span, "Helper called {helper_id} was not found");
+            };
+            let Some(helper) = helpers.get(&args.len()) else {
+                abort!(self.path_span, "Helper called {helper_id} exists but doesn't have a version with {} arguments", args.len());
+            };
+            return ValOutput::String(format!("{{{}}}", helper.to_code(args)));
+        }
+
         let (id, field) = (get_all_before(id, "."), get_all_after_strict(id, "."));
         if id.chars().any(|c| !c.is_alphanumeric() && c != '_') {
             abort!(args.path_span, "Invalid identifier: {id:?} in template {}", args.path);
@@ -34,7 +62,7 @@ impl Args {
                     Some(field) => {
                         let mut token_stream = TokenStream::new();
                         token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
-                        return TokenTree::Group(Group::new(Delimiter::Brace, token_stream))
+                        return ValOutput::TokenTree(TokenTree::Group(Group::new(Delimiter::Brace, token_stream)))
                     }
                     None => val
                 }
@@ -46,7 +74,7 @@ impl Args {
             token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
             val = TokenTree::Group(Group::new(Delimiter::Brace, token_stream));
         }
-        val
+        ValOutput::TokenTree(val)
     }
 }
 
