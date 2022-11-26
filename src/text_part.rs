@@ -36,18 +36,9 @@ impl TextPart {
         parts
     }
 
-    /// Turn the text part into valid Rust code for Yew
+    /// Turns the text part into valid Rust code for Yew
     pub(crate) fn to_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-        match self {
-            TextPart::Literal(t) => format!("{{\"{t}\"}}"),
-            TextPart::Expression(id) => {
-                let mut value = args.get_val(id, opts, iters, args).to_string();
-                if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
-                    value = format!("macro_produced_{id}");
-                };
-                format!("{{{value}}}")
-            },
-        }
+        text_part_to_code(self, opts, iters, args)
     }
 }
 

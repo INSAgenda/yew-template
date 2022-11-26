@@ -7,7 +7,7 @@ pub(crate) enum HtmlPart {
 }
 
 impl HtmlPart {
-    /// Turn the HTML part into Rust code for Yew
+    /// Turns the HTML part into Rust code for Yew
     pub(crate) fn into_code(self, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
         match self {
             HtmlPart::Element(el) => element_to_code(el, depth, opts, iters, args),

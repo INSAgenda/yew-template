@@ -1,8 +1,22 @@
 use proc_macro::TokenTree;
 use crate::*;
 
+/// Turns a [TextPart] to Rust code for Yew
+pub(crate) fn text_part_to_code(text_part: &TextPart, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+    match text_part {
+        TextPart::Literal(t) => format!("{{\"{t}\"}}"),
+        TextPart::Expression(id) => {
+            let mut value = args.get_val(id, opts, iters, args).to_string();
+            if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
+                value = format!("macro_produced_{id}");
+            };
+            format!("{{{value}}}")
+        },
+    }
+}
+
 /// Turns an HTML attribute to Rust code for Yew
-fn attr_to_code((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
+pub(crate) fn attr_to_code((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
     // Remove attributes used by yew-template
     if name == "opt" || name == "iter" || name == "present-if" {
         return None
