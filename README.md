@@ -15,9 +15,9 @@
 
 ### Hello World
 
-```html
+```hbs
 <div>
-    <p>Hello [name]!</p>
+    <p>Hello {{name}}!</p>
 </div>
 ```
 
@@ -79,9 +79,9 @@ let html = template_html!("templates/hello.html", name=other_name);
 
 ### Attributes
 
-```html
-<div style=[style]>
-   <p>Hello [name]!</p>
+```hbs
+<div style={{style}}>
+   <p>Hello {{name}}!</p>
 </div>
 ```
 
@@ -95,8 +95,8 @@ let html = template_html!(
 
 Yew-template supports a `format!`-like syntax in attributes, allowing you to do the following:
 
-```html
-<div style="background-color: [bg_color]; color: [text_color];">
+```hbs
+<div style="background-color: {{bg_color}}; color: {{text_color}};">
    Yew is cool
 </div>
 ```
@@ -106,9 +106,9 @@ Yew-template supports a `format!`-like syntax in attributes, allowing you to do 
 Sometimes you want to pass many struct fields as variables to your template, but destructuring the struct would be too verbose.
 As when using the actual yew macro, you can just pass the struct and access its fields from the template:
 
-```html
+```hbs
 <div>
-   <p>Hello [person.first_name] [person.last_name]!</p>
+   <p>Hello {{person.first_name}} {{person.last_name}}!</p>
 </div>
 ```
 
@@ -162,9 +162,9 @@ Note that the curly brackets around expressions are required for expressions.
 
 ### Example with Yew callbacks
 
-```html
-<div onclick=[onclick]>
-   <p>Hello [name]!</p>
+```hbs
+<div onclick={{onclick}}>
+   <p>Hello {{name}}!</p>
 </div>
 ```
 
@@ -184,12 +184,12 @@ Their value is expected to be an `Option<T>`.
 
 Optional variables work with optional html elements. Mark an element with the `opt` attribute to make it optional. An optional element will only be rendered if *ALL* the optional variables it contains are `Some`. Note that variables contained by smaller optional elements are excluded from this requirement.
 
-```html
+```hbs
 <div>
-    <p>Hello [name]!</p>
+    <p>Hello {{name}}!</p>
     <div opt>
         <h2>Age</h2>
-        <p>You are [opt_age] years old!</p>
+        <p>You are {{opt_age}} years old!</p>
     </div>
 </div>
 ```
@@ -198,13 +198,13 @@ In the example above, the `div` block will not be shown if `opt_age` is `None`.
 
 Let's see how optional elements can be nested.
 
-```html
+```hbs
 <div>
-    <p>Hello [name]!</p>
+    <p>Hello {{name}}!</p>
     <div opt>
         <h2>Age</h2>
-        <p>You are [opt_age] years old!</p>
-        <p opt>And you are born in [opt_birth_city].</p>
+        <p>You are {{opt_age}} years old!</p>
+        <p opt>And you are born in {{opt_birth_city}}.</p>
     </div>
 </div>
 ```
@@ -232,11 +232,11 @@ Sometimes optional variables are not suitable for making an element optional. Yo
 
 Elements can be given a `present-if` attribute. The value will be evaluated at runtime as a boolean expression. If the expression is `true`, the element will be rendered. Otherwise, it will be skipped.
 
-```html
-<div present-if=[condition]>
+```hbs
+<div present-if={{condition}}>
     <p>1+1 = 3</p>
 </div>
-<div present-if=![condition]> <!-- Negation is supported -->
+<div present-if=!{{condition}}> <!-- Negation is supported -->
     <p>1+1 != 3</p>
 </div>
 ```
@@ -250,11 +250,11 @@ let html = template_html!("templates/present_if.html", condition={ 1+1==3 });
 Iterators work similarly to optional variables. The iterator variables are marked with an `iter_` prefix or an `_iter` suffix, at your option.
 The looping html element is marked with the `iter` attribute. The element will reproduce until one of the iterators it depends on is empty.
 
-```html
+```hbs
 <div>
     <h2>Contributors:</h2>
     <ul>
-        <li iter>[contributors_iter] ([commits_iter] commits)</li>
+        <li iter>{{contributors_iter}} ({{commits_iter}} commits)</li>
     </ul>
 </div>
 ```
@@ -296,9 +296,9 @@ As of now, Yew item references in lists are not supported. This will be inmpleme
 
 The whole point of using this crate is making your code more readable than when using Yew directly. However, you will still find yourself writing lines of code that do not carry that much meaning. We already saw that `variable_ident=variable_ident` can be shortened to `variable_ident`. But it could even be completely omitted! Add `...` at the end of your macro call to tell that undefined variables should be retrieved from local variables with the same name. Taking the "Hello world" example:
 
-```html
+```hbs
 <div>
-    <p>Hello [name]!</p>
+    <p>Hello {{name}}!</p>
 </div>
 ```
 
@@ -313,9 +313,9 @@ This behavior is disabled by default because missing variables are often mistake
 
 Yew-template often requires you to add attributes on html elements such as `iter`, `opt` or `present-if`. In rare cases, you don't have any suitable element to add these attributes to, and adding a wrapper element would break your CSS. In this case, you can use virtual elements. The virtual elements tag will be removed from the final HTML but it allows you to add special attributes where they are needed.
 
-```html
+```hbs
 <virtual opt>
-    [opt_name]
+    {{opt_name}}
 </virtual>
 ```
 
