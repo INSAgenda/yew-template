@@ -44,6 +44,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut helpers = HashMap::new();
         helpers.insert(String::from("loud"), vec![Helper::parse("[0].to_uppercase()")].into_iter().collect());
+        helpers.insert(String::from("message"), vec![Helper::parse("ctx.link().callback(|_| [0])")].into_iter().collect());
 
         Self {
             auto_default: false,
