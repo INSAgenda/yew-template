@@ -11,6 +11,7 @@ mod html_element;
 mod i18n;
 mod text_part;
 mod config;
+mod helper;
 pub(crate) use {
     crate::args::*,
     crate::codegen::*,
@@ -18,8 +19,10 @@ pub(crate) use {
     crate::html_element::*,
     crate::config::*,
     crate::text_part::*,
+    crate::helper::*,
     proc_macro_error::*,
     string_tools::*,
+    std::collections::HashMap,
 };
 #[cfg(feature = "i18n")]
 pub(crate) use crate::i18n::*;

@@ -1,5 +1,21 @@
 use crate::*;
 
+#[cfg_attr(feature = "config", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "config", serde(untagged))]
+pub enum AnyValues {
+    Value(String),
+    Values(Vec<String>)
+}
+
+impl AnyValues {
+    pub fn into_vec(self) -> Vec<String> {
+        match self {
+            AnyValues::Value(v) => vec![v],
+            AnyValues::Values(v) => v,
+        }
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "config", derive(serde::Serialize))]
 pub struct Config {
@@ -18,16 +34,24 @@ pub struct Config {
 
     /// Two strings marking the beginning and end of a variable in a template.
     pub variable_bounds: (String, String),
+
+    /// Helpers to use in templates
+    #[cfg_attr(feature = "config", serde(skip_serializing))]
+    pub helpers: HashMap<String, HashMap<usize, Helper>>,
 }
 
 impl Default for Config {
     fn default() -> Self {
+        let mut helpers = HashMap::new();
+        helpers.insert(String::from("loud"), vec![Helper::parse("[0].to_string()")].into_iter().collect());
+
         Self {
             auto_default: false,
             template_directory: String::from("./"),
             locale_directory: String::from("./locales/"),
             locale_code: String::from("locale.as_str()"),
             variable_bounds: (String::from("{{"), String::from("}}")),
+            helpers,
         }
     }
 }
@@ -39,17 +63,29 @@ pub struct ConfigLoader {
     pub locale_directory: Option<String>,
     pub locale_code: Option<String>,
     pub variable_separator: Option<(String, String)>,
+    pub helpers: Option<HashMap<String, AnyValues>>,
 }
 
 impl From<ConfigLoader> for Config {
     fn from(val: ConfigLoader) -> Self {
         let default = Config::default();
+        let mut helpers = default.helpers;
+        if let Some(custom_helpers) = val.helpers {
+            for helper_name in custom_helpers {
+                for helper_def in helper_name.1.into_vec() {
+                    let (args_len, helper) = Helper::parse(&helper_def);
+                    helpers.entry(helper_name.0.clone()).or_insert_with(HashMap::new).insert(args_len, helper);
+                }
+            }
+        }
+
         Config {
             auto_default: val.auto_default.unwrap_or(default.auto_default),
             template_directory: val.template_directory.unwrap_or(default.template_directory),
             locale_directory: val.locale_directory.unwrap_or(default.locale_directory),
             locale_code: val.locale_code.unwrap_or(default.locale_code),
             variable_bounds: val.variable_separator.unwrap_or(default.variable_bounds),
+            helpers,
         }
     }
 }
