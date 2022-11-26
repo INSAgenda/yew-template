@@ -1,4 +1,3 @@
-use proc_macro::TokenTree;
 use crate::*;
 
 /// Turns a [TextPart] to Rust code for Yew
