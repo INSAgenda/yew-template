@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Debug)]
-#[cfg_attr(feature = "config", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "config", derive(serde::Serialize))]
 pub struct Config {
     /// Whether to attempt to capture local variables instead of aborting when arguments required by the template are missing.
     pub auto_default: bool,
@@ -28,15 +28,37 @@ impl Default for Config {
     }
 }
 
+#[cfg_attr(feature = "config", derive(serde::Deserialize))]
+pub struct ConfigLoader {
+    pub auto_default: Option<bool>,
+    pub template_directory: Option<String>,
+    pub locale_directory: Option<String>,
+    pub locale_code: Option<String>,
+}
+
+impl From<ConfigLoader> for Config {
+    fn from(val: ConfigLoader) -> Self {
+        let default = Config::default();
+        Config {
+            auto_default: val.auto_default.unwrap_or(default.auto_default),
+            template_directory: val.template_directory.unwrap_or(default.template_directory),
+            locale_directory: val.locale_directory.unwrap_or(default.locale_directory),
+            locale_code: val.locale_code.unwrap_or(default.locale_code),
+        }
+    }
+}
+
 #[cfg(feature = "config")]
 pub fn read_config() -> Config {
     let Ok(data) = std::fs::read_to_string("yew-template.toml") else {
         return Config::default();
     };
 
-    let Ok(mut config) = toml::from_str::<Config>(&data) else {
+    let Ok(config_loader) = toml::from_str::<ConfigLoader>(&data) else {
         abort_call_site!("Failed to parse yew-template.toml");
     };
+    let mut config: Config = config_loader.into();
+
     if !config.template_directory.is_empty() && !config.template_directory.ends_with('/') {
         config.template_directory.push('/');
     }
