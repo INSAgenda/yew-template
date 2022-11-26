@@ -1,8 +1,11 @@
 use crate::*;
 
 /// Used to safely embed external strings into generated Rust code without risking injection attacks.
-pub(crate) fn escaped_str_code(t: &str) -> String {
-    let escaped = t.replace('\\', "\\\\").replace('"', "\\\"");
+pub(crate) fn escaped_str_code(t: &str, for_format: bool) -> String {
+    let mut escaped = t.replace('\\', "\\\\").replace('"', "\\\"");
+    if for_format {
+        escaped = escaped.replace('{', "{{").replace('}', "}}");
+    }
     format!("\"{escaped}\"")
 }
 
@@ -10,7 +13,7 @@ pub(crate) fn escaped_str_code(t: &str) -> String {
 pub(crate) fn text_part_to_code(text_part: &TextPart, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
     match text_part {
         TextPart::Literal(t) => {
-            format!("{{{}}}", escaped_str_code(t))
+            format!("{{{}}}", escaped_str_code(t, false))
         }
         TextPart::Expression(id) => {
             let mut value = args.get_val(id, opts, iters, args).to_string();
@@ -58,7 +61,7 @@ pub(crate) fn attr_to_code((name, value): (String, String), opts: &mut Vec<Strin
                     }
                 }
             }
-            let format_literal = escaped_str_code(&format_literal);
+            let format_literal = escaped_str_code(&format_literal, true);
             let format_args = format_args.join(", ");
             Some(format!("{name}={{format!({format_literal}, {format_args})}}"))
         }
@@ -211,13 +214,13 @@ pub(crate) fn text_to_code(text: String, depth: usize, opts: &mut Vec<String>, i
         for (i, (locale, translation)) in translations.iter().enumerate().rev() {
             let arm = match i == 0 {
                 true => String::from("_"),
-                false => escaped_str_code(locale),
+                false => escaped_str_code(locale, false),
             };
             let text = match &translation[0] {
                 TextPart::Literal(l) => l,
                 _ => unreachable!(),
             };
-            let text = escaped_str_code(text);
+            let text = escaped_str_code(text, false);
             result.push_str(&format!("{tabs}    {arm} => {text},\n"));
         }
         result.push_str(&format!("{tabs}}}}}"));
@@ -230,7 +233,7 @@ pub(crate) fn text_to_code(text: String, depth: usize, opts: &mut Vec<String>, i
     for (i, (locale, translation)) in translations.iter().enumerate().rev() {
         let arm = match i == 0 {
             true => String::from("_"),
-            false => escaped_str_code(locale),
+            false => escaped_str_code(locale, false),
         };
         let code = translation.to_code(opts, iters, args);
         result.push_str(&format!("{tabs}    {arm} => yew::html! {{ <> {code} </> }},\n"));
