@@ -107,6 +107,7 @@ impl Catalog {
             }
 
             let locale = path.file_name().expect("no file stem").to_str().expect("cannot convert file stem").trim_end_matches(".po").to_string();
+            let locale = locale.replace('\\', "\\\\").replace('\"', "\\\"");
             let file = std::fs::File::open(path).unwrap_or_else(|_| panic!("could not open the {locale} catalog"));
             let parser = PoParser::new();
             let reader = parser.parse(file).unwrap_or_else(|_| panic!("could not parse the {locale} catalog"));
