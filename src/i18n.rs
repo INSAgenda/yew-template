@@ -19,8 +19,8 @@ impl Element {
             match &child.part {
                 HtmlPart::Text(text) => {
                     // Ignore the text if it's only a variable
-                    let text_parts = parse_text_part(text, args);
-                    if matches!(text_parts.as_slice(), &[TextPart::Variable(_)]) {
+                    let text_parts = TextPart::parse(text, args);
+                    if matches!(text_parts.as_slice(), &[TextPart::Expression(_)]) {
                         continue;
                     }
         
@@ -136,13 +136,13 @@ impl Catalog {
         let context_and_text = (context.clone(), text.to_string());
 
         let mut translations = Vec::new();
-        translations.push((String::new(), parse_text_part(text, args)));
+        translations.push((String::new(), TextPart::parse(text, args)));
         for (language, catalog) in &self.catalogs {
             let Some(translated_text) = catalog.get(&context_and_text) else {
                 eprintln!("WARNING: Missing translation for text {text:?} with context {context:?} in language {language}");
                 continue;
             };
-            let translated_parts = parse_text_part(translated_text, args);
+            let translated_parts = TextPart::parse(translated_text, args);
             translations.push((language.to_owned(), translated_parts));
         }
 

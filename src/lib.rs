@@ -9,6 +9,7 @@ mod sink;
 mod html_element;
 #[cfg(feature = "i18n")]
 mod i18n;
+mod text_part;
 mod config;
 pub(crate) use {
     crate::args::*,
@@ -16,7 +17,9 @@ pub(crate) use {
     crate::sink::*,
     crate::html_element::*,
     crate::config::*,
+    crate::text_part::*,
     proc_macro_error::*,
+    string_tools::*,
 };
 #[cfg(feature = "i18n")]
 pub(crate) use crate::i18n::*;

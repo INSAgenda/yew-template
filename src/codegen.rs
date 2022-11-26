@@ -1,52 +1,6 @@
 use proc_macro::TokenTree;
-use string_tools::{get_all_between_strict, get_all_before_strict};
 use crate::*;
 
-#[derive(Debug)]
-pub(crate) enum TextPart {
-    Literal(String),
-    Variable(String),
-}
-
-impl TextPart {
-    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-        match self {
-            TextPart::Literal(t) => format!("{{\"{t}\"}}"),
-            TextPart::Variable(id) => {
-                let mut value = args.get_val(id, opts, iters, args).to_string();
-                if id.starts_with("opt_") || id.ends_with("_opt") || id.starts_with("iter_") || id.ends_with("_iter") {
-                    value = format!("macro_produced_{id}");
-                };
-                format!("{{{value}}}")
-            },
-        }
-    }
-}
-
-pub(crate) fn parse_text_part(mut s: &str, args: &Args) -> Vec<TextPart> {
-    let mut parts = Vec::new();
-
-    while let Some(text) = get_all_before_strict(s, "[") {
-        s = &s[text.len() + 1..];
-        if !text.is_empty() {
-            parts.push(TextPart::Literal(text.to_string()));
-        }
-        if s.is_empty() {
-            break;
-        }
-        let var = match get_all_before_strict(s, "]") {
-            Some(var) => var,
-            None => abort!(args.path_span, "Missing closing bracket in html text"),
-        };
-        s = &s[var.len() + 1..];
-        parts.push(TextPart::Variable(var.to_string()));
-    }
-    if !s.is_empty() {
-        parts.push(TextPart::Literal(s.to_string()));
-    }
-
-    parts
-}
 
 fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> Option<String> {
     if name == "opt" || name == "iter" || name == "present-if" {
@@ -93,16 +47,6 @@ fn attr_to_yew_string((name, value): (String, String), opts: &mut Vec<String>, i
     } else {
         format!("{}=\"{}\"", name, value)
     })
-}
-
-trait HackTraitVecTextPart {
-    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String;
-}
-
-impl HackTraitVecTextPart for Vec<TextPart> {
-    fn generate_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-        self.iter().map(|p| p.generate_code(opts, iters, args)).collect::<Vec<_>>().join("")
-    }
 }
 
 fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
@@ -208,9 +152,9 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
         }
         HtmlPart::Text(text) => {
             // If it's only a single variable then no need to translate
-            let text_parts = parse_text_part(&text, args);
-            if matches!(text_parts.as_slice(), &[TextPart::Variable(_)]) {
-                return text_parts[0].generate_code(opts, iters, args);
+            let text_parts = TextPart::parse(&text, args);
+            if matches!(text_parts.as_slice(), &[TextPart::Expression(_)]) {
+                return text_parts[0].to_code(opts, iters, args);
             }
 
             // Get localized texts
@@ -221,7 +165,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
 
             // Translations are disabled
             if translations.len() == 1 {
-                return format!("\n{tabs}{}", translations[0].1.generate_code(opts, iters, args));
+                return format!("\n{tabs}{}", translations[0].1.to_code(opts, iters, args));
             }
 
             // It's a simple case with a static string
@@ -259,7 +203,7 @@ fn html_part_to_yew_string(part: HtmlPart, depth: usize, opts: &mut Vec<String>,
                     true => String::from("_"),
                     false => format!("\"{locale}\""),
                 };
-                let code = translation.generate_code(opts, iters, args);
+                let code = translation.to_code(opts, iters, args);
                 result.push_str(&format!("{tabs}    {arm} => yew::html! {{ <> {code} </> }},\n"));
             }
             result.push_str(&format!("{tabs}}}}}"));
