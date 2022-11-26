@@ -15,6 +15,9 @@ pub struct Config {
     /// Rust code to evaluate as locale. Should evaluate to a &str.
     /// If will be inserted in generated code like this: `match locale_code {`.
     pub locale_code: String,
+
+    /// Two strings marking the beginning and end of a variable in a template.
+    pub variable_bounds: (String, String),
 }
 
 impl Default for Config {
@@ -24,6 +27,7 @@ impl Default for Config {
             template_directory: String::from("./"),
             locale_directory: String::from("./locales/"),
             locale_code: String::from("locale.as_str()"),
+            variable_bounds: (String::from("{{"), String::from("}}")),
         }
     }
 }
@@ -34,6 +38,7 @@ pub struct ConfigLoader {
     pub template_directory: Option<String>,
     pub locale_directory: Option<String>,
     pub locale_code: Option<String>,
+    pub variable_separator: Option<(String, String)>,
 }
 
 impl From<ConfigLoader> for Config {
@@ -44,6 +49,7 @@ impl From<ConfigLoader> for Config {
             template_directory: val.template_directory.unwrap_or(default.template_directory),
             locale_directory: val.locale_directory.unwrap_or(default.locale_directory),
             locale_code: val.locale_code.unwrap_or(default.locale_code),
+            variable_bounds: val.variable_separator.unwrap_or(default.variable_bounds),
         }
     }
 }

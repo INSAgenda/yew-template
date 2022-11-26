@@ -162,10 +162,10 @@ pub(crate) fn element_to_code(el: Element, depth: usize, opts: &mut Vec<String>,
             present_if = present_if[1..].to_string();
         }
         let negation = if not {"!"} else {""};
-        if !present_if.starts_with('[') || !present_if.ends_with(']') {
+        if !present_if.starts_with(&args.config.variable_bounds.0) || !present_if.ends_with(&args.config.variable_bounds.1) {
             abort!(args.path_span, "present_if attribute must be a variable");
         }
-        present_if = present_if[1..present_if.len()-1].to_string();
+        present_if = present_if[args.config.variable_bounds.0.len()..present_if.len()-args.config.variable_bounds.1.len()].to_string();
         let val = args.get_val(&present_if, &mut Vec::new(), &mut Vec::new(), args);
         content = content.replace('\n', "\n    ");
         content = format!("\n\

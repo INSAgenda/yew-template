@@ -377,6 +377,9 @@ locale_directory = './locales/'
 # Rust code to evaluate as locale. Should evaluate to a &str.
 # If will be inserted in generated code like this: `match locale_code {`.
 locale_code = 'locale.as_str()'
+
+# Two strings marking the beginning and end of a variable in a template.
+variable_separator = ["{{", "}}"]
 ```
 
 ## Features

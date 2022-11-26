@@ -14,19 +14,19 @@ impl TextPart {
     pub(crate) fn parse(mut s: &str, args: &Args) -> Vec<TextPart> {
         let mut parts = Vec::new();
 
-        while let Some(text) = get_all_before_strict(s, "[") {
-            s = &s[text.len() + 1..];
+        while let Some(text) = get_all_before_strict(s, &args.config.variable_bounds.0) {
+            s = &s[text.len() + args.config.variable_bounds.0.len()..];
             if !text.is_empty() {
                 parts.push(TextPart::Literal(text.to_string()));
             }
             if s.is_empty() {
                 break;
             }
-            let var = match get_all_before_strict(s, "]") {
+            let var = match get_all_before_strict(s, &args.config.variable_bounds.1) {
                 Some(var) => var,
-                None => abort!(args.path_span, "Missing closing bracket in html text"),
+                None => abort!(args.path_span, "Missing closing variable separator in html text"),
             };
-            s = &s[var.len() + 1..];
+            s = &s[var.len() + args.config.variable_bounds.1.len()..];
             parts.push(TextPart::Expression(var.to_string()));
         }
         if !s.is_empty() {

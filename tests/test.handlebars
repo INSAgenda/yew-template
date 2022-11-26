@@ -1,0 +1,29 @@
+<div test="{{value}}" style="background-color: {{background_color}};">
+    {{value}}
+    <p test2="{{value2}}" test3="test3">
+        Yoo man {{value2}}<br test4="{{boobool}}"/>
+    </p>
+    <div opt>
+        {{opt_value}}
+        <div opt>
+            {{opt_value2}}
+        </div>
+    </div>
+    <div iter>
+        &nbsp;Thank "you, \{{names_iter}}!
+    </div>
+    <p>
+        Yew template resists "code injection attackes\{{value}}
+    </p>
+    <div>
+        {{person.first_name}} {{person.last_name}}
+    </div>
+    <div present-if={{has_password}}>
+        You have a password!
+    </div>
+    <div present-if=!{{has_password}}>
+        You have no password...
+    </div>
+    {{zebi}}
+    <virtual opt present-if=!{{has_password}}>{{zebi}}</virtual>
+</div>
