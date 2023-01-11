@@ -242,11 +242,8 @@ pub(crate) fn text_to_code(text: String, depth: usize, opts: &mut Vec<String>, i
 }
 
 pub(crate) fn generate_code(root: Element, args: Args) -> String {
-    //println!("{:#?}", root);
-
     let yew_html = HtmlPart::Element(root).into_code(0, &mut Vec::new(), &mut Vec::new(), &args);
     let yew_code = format!("yew::html! {{ {yew_html} }}");
-    println!("{}", yew_code);
 
     yew_code
 }
