@@ -26,4 +26,4 @@ config = ["toml", "serde"]
 i18n = ["poreader"]
 
 [dev-dependencies]
-yew = "0.19"
+yew = "0.20"

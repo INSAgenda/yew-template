@@ -36,6 +36,11 @@ pub(crate) fn attr_to_code((name, value): (String, String), opts: &mut Vec<Strin
     match text_parts.len() {
         0 => None,
         1 => {
+            if let TextPart::Literal(text) = &text_parts[0] {
+                if text == "true" || text == "false" {
+                    return Some(format!("{name}={{{text}}}"))
+                }
+            }
             let text_part_code = text_parts[0].to_code(opts, iters, args);
             Some(format!("{name}={text_part_code}"))
         }
