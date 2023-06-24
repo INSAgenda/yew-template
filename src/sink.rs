@@ -14,13 +14,20 @@ impl<'a> TokenSink for HtmlSink<'a> {
         match token {
             HtmlToken::TagToken(tag) => match tag.kind {
                 TagKind::StartTag => {
-                    let element = Element {
+                    let mut element = Element {
                         name: tag.name.to_string(),
                         self_closing: tag.self_closing,
                         open_attrs: tag.attrs.into_iter().map(|a| (a.name.local.to_string(), a.value.to_string())).collect(),
                         close_attrs: Vec::new(),
                         children: Vec::new(),
                     };
+                    if element.name == "comp" || element.name == "component" {
+                        let Some(real_name) = element.open_attrs.iter().find(|(k, _)| k == "name").map(|(_, v)| v) else {
+                            abort!(self.args.path_span, "Missing name attribute on component tag at line {line_number}");
+                        };
+                        element.name = real_name.to_owned();
+                        element.open_attrs.retain(|(k, _)| k != "name");
+                    }
                     match element.self_closing {
                         true => match self.opened_elements.last_mut() {
                             Some(container) => container.children.push(HtmlPartWithLine { part: HtmlPart::Element(element), line: line_number as usize }),

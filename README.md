@@ -41,6 +41,7 @@ let html = yew::html! {
 - [Struct fields](#struct-fields)
 - [Expressions](#expressions)
 - [Example: Yew callbacks](#example-with-yew-callbacks)
+- [Components](#components)
 - [Optional variables](#optional-variables)
 - [Optional elements](#optional-elements)
 - [Iterators](#iterators)
@@ -174,6 +175,30 @@ let html = template_html!(
     name="World",
     onclick={link.callback(|_| Msg::AddOne)}
 );
+```
+
+### Components
+
+While yew-template can be used only with raw HTML, it is also possible to use Yew components in your templates.
+These do not follow the same syntax as in Yew's html macro, and need to be explicitly marked as components using the `comp` or `component` tag name.
+
+```hbs
+<comp name="SearchBar"/>
+<!-- Which is equivalent to -->
+<component name="SearchBar"/>
+<!-- Or even -->
+<Component name="SearchBar"/>
+```
+
+As you can see, the rust identifier for the component is passed as an attribute.
+
+Other attributes and even children can be passed the regular way provided that your component supports them.
+
+```hbs
+<comp name="SearchBar" placeholder="Search..." onclick={{onclick}}>
+    <span>child 1</span>
+    <span>child 2</span>
+</comp>
 ```
 
 ### Optional variables
