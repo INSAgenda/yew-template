@@ -4,7 +4,7 @@ use crate::*;
 #[cfg_attr(feature = "config", serde(untagged))]
 pub enum AnyValues {
     Value(String),
-    Values(Vec<String>)
+    Values(Vec<String>),
 }
 
 impl AnyValues {
@@ -43,8 +43,18 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         let mut helpers = HashMap::new();
-        helpers.insert(String::from("loud"), vec![Helper::parse("[0].to_uppercase()")].into_iter().collect());
-        helpers.insert(String::from("message"), vec![Helper::parse("ctx.link().callback(|_| [0])")].into_iter().collect());
+        helpers.insert(
+            String::from("loud"),
+            vec![Helper::parse("[0].to_uppercase()")]
+                .into_iter()
+                .collect(),
+        );
+        helpers.insert(
+            String::from("message"),
+            vec![Helper::parse("ctx.link().callback(|_| [0])")]
+                .into_iter()
+                .collect(),
+        );
 
         Self {
             auto_default: false,
@@ -75,7 +85,10 @@ impl From<ConfigLoader> for Config {
             for helper_name in custom_helpers {
                 for helper_def in helper_name.1.into_vec() {
                     let (args_len, helper) = Helper::parse(&helper_def);
-                    helpers.entry(helper_name.0.clone()).or_insert_with(HashMap::new).insert(args_len, helper);
+                    helpers
+                        .entry(helper_name.0.clone())
+                        .or_insert_with(HashMap::new)
+                        .insert(args_len, helper);
                 }
             }
         }

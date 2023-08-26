@@ -24,7 +24,10 @@ impl TextPart {
             }
             let var = match get_all_before_strict(s, &args.config.variable_bounds.1) {
                 Some(var) => var,
-                None => abort!(args.path_span, "Missing closing variable separator in html text"),
+                None => abort!(
+                    args.path_span,
+                    "Missing closing variable separator in html text"
+                ),
             };
             s = &s[var.len() + args.config.variable_bounds.1.len()..];
             parts.push(TextPart::Expression(var.to_string()));
@@ -37,7 +40,12 @@ impl TextPart {
     }
 
     /// Turns the text part into valid Rust code for Yew
-    pub(crate) fn to_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
+    pub(crate) fn to_code(
+        &self,
+        opts: &mut Vec<String>,
+        iters: &mut Vec<String>,
+        args: &Args,
+    ) -> String {
         text_part_to_code(self, opts, iters, args)
     }
 }
@@ -49,6 +57,9 @@ pub(crate) trait HackTraitVecTextPart {
 impl HackTraitVecTextPart for Vec<TextPart> {
     /// Turns a list of text parts into valid Rust code for Yew
     fn to_code(&self, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> String {
-        self.iter().map(|p| p.to_code(opts, iters, args)).collect::<Vec<_>>().join("")
+        self.iter()
+            .map(|p| p.to_code(opts, iters, args))
+            .collect::<Vec<_>>()
+            .join("")
     }
 }

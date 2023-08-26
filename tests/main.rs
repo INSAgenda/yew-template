@@ -7,7 +7,10 @@ struct Person {
 
 fn main() {
     let boobool = false.to_string();
-    let person = Person { first_name: "Edouard".to_string(), last_name: "G".to_string() };
+    let person = Person {
+        first_name: "Edouard".to_string(),
+        last_name: "G".to_string(),
+    };
     let zebi = 42;
     let color = "red";
     let locale = String::from("en");

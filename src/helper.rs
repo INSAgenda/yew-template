@@ -21,7 +21,11 @@ impl Helper {
                 // Make sure all characters are digits
                 if arg.chars().all(|c| c.is_ascii_digit()) {
                     let arg = arg.parse::<usize>().unwrap();
-                    args.push((arg, idx_start + (value.len() - to_scan.len()), idx_end + (value.len() - to_scan.len())));
+                    args.push((
+                        arg,
+                        idx_start + (value.len() - to_scan.len()),
+                        idx_end + (value.len() - to_scan.len()),
+                    ));
                 }
 
                 to_scan = &to_scan[idx_end..];
@@ -48,12 +52,21 @@ impl Helper {
         let mut removed_offset = 0;
         let mut args2 = Vec::new();
         for (arg, idx_start, idx_end) in args {
-            value.replace_range(idx_start - removed_offset - 1..idx_end - removed_offset + 1, "");
+            value.replace_range(
+                idx_start - removed_offset - 1..idx_end - removed_offset + 1,
+                "",
+            );
             args2.push((arg, idx_start - 1 - removed_offset));
             removed_offset += (idx_end - idx_start) + 2;
         }
 
-        (max+1, Helper { glue: value, args: args2 })
+        (
+            max + 1,
+            Helper {
+                glue: value,
+                args: args2,
+            },
+        )
     }
 
     pub fn to_code(&self, values: Vec<String>) -> String {
@@ -73,6 +86,10 @@ fn test_helper() {
     assert_eq!(code, "15.to_string()");
 
     let helper = Helper::parse("[0] + [1] - [2] + [1]").1;
-    let code = helper.to_code(vec![String::from("15"), String::from("10"), String::from("5")]);
+    let code = helper.to_code(vec![
+        String::from("15"),
+        String::from("10"),
+        String::from("5"),
+    ]);
     assert_eq!(code, "15 + 10 - 5 + 10");
 }
