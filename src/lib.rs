@@ -28,11 +28,11 @@ pub(crate) use {
 pub(crate) use crate::i18n::*;
 
 /// Reads a file and replaces the variables it contains with the supplied values. Produces a Yew html! macro invocation.
-/// 
-/// ```ignore
-/// let html = template_html!("path", arg="value", arg2="value2", arg3={expression});
+///
+/// ```rust ignore
+/// let html = yew_template::template_html!("path", arg="value", arg2="value2", arg3={expression});
 /// ```
-/// 
+///
 /// See top-level documentation for more information.
 #[proc_macro]
 #[proc_macro_error]
