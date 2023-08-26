@@ -26,6 +26,7 @@ pub(crate) struct HtmlPartWithLine {
 pub(crate) struct Element {
     pub(crate) name: String,
     pub(crate) self_closing: bool,
+    pub(crate) is_component: bool,
     pub(crate) open_attrs: Vec<(String, String)>,
     pub(crate) close_attrs: Vec<(String, String)>,
     pub(crate) children: Vec<HtmlPartWithLine>,
