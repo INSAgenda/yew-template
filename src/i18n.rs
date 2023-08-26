@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::Path, io::Read};
-use poreader::{PoParser, Message};
 use crate::*;
+use poreader::{Message, PoParser};
+use std::{collections::HashMap, io::Read, path::Path};
 
 pub struct Translatable {
     original: String,
@@ -9,7 +9,10 @@ pub struct Translatable {
 }
 
 fn context_from_path(path: &str) -> &str {
-    path.split('/').last().unwrap_or_default().trim_end_matches(".html")
+    path.split('/')
+        .last()
+        .unwrap_or_default()
+        .trim_end_matches(".html")
 }
 
 impl Element {
@@ -23,13 +26,13 @@ impl Element {
                     if matches!(text_parts.as_slice(), &[TextPart::Expression(_)]) {
                         continue;
                     }
-        
+
                     translatables.push(Translatable {
                         original: text.to_string(),
                         origin: (args.path.trim_start_matches("./").to_owned(), child.line),
                         context: context_from_path(&args.path).to_string(),
                     })
-                },
+                }
                 HtmlPart::Element(el) => translatables.append(&mut el.get_translatables(args)),
             }
         }
@@ -39,7 +42,10 @@ impl Element {
 
 impl Translatable {
     fn generate_pot_part(&self) -> String {
-        format!("#: {}:{}\nmsgctxt {:?}\nmsgid {:?}\nmsgstr \"\"", self.origin.0, self.origin.1, self.context, self.original)
+        format!(
+            "#: {}:{}\nmsgctxt {:?}\nmsgid {:?}\nmsgstr \"\"",
+            self.origin.0, self.origin.1, self.context, self.original
+        )
     }
 }
 
@@ -50,20 +56,22 @@ pub(crate) fn generate_pot(root: &Element, args: &Args) {
     }
 
     // Delete template.pot if it hasn't been modified too recently (otherwise keep the data)
-    let mut data = match std::fs::File::open(format!("{}template.pot", args.config.locale_directory)) {
-        Ok(mut file) => {
-            let metadata = file.metadata().unwrap();
-            let mut data = String::new();
-            file.read_to_string(&mut data).unwrap();
-            if metadata.modified().unwrap().elapsed().unwrap().as_secs() > 120 {
-                std::fs::remove_file(format!("{}template.pot", args.config.locale_directory)).unwrap();
-                String::new()
-            } else {
-                data
+    let mut data =
+        match std::fs::File::open(format!("{}template.pot", args.config.locale_directory)) {
+            Ok(mut file) => {
+                let metadata = file.metadata().unwrap();
+                let mut data = String::new();
+                file.read_to_string(&mut data).unwrap();
+                if metadata.modified().unwrap().elapsed().unwrap().as_secs() > 120 {
+                    std::fs::remove_file(format!("{}template.pot", args.config.locale_directory))
+                        .unwrap();
+                    String::new()
+                } else {
+                    data
+                }
             }
-        }
-        _ => String::new()
-    };
+            _ => String::new(),
+        };
 
     // Append new translatables
     let translatables = root.get_translatables(args);
@@ -75,7 +83,11 @@ pub(crate) fn generate_pot(root: &Element, args: &Args) {
             data.push('\n');
         }
     }
-    std::fs::write(format!("{}template.pot", args.config.locale_directory), data).unwrap();
+    std::fs::write(
+        format!("{}template.pot", args.config.locale_directory),
+        data,
+    )
+    .unwrap();
 
     // Make sure the file is in .gitignore
     let gitignore_path = format!("{}.gitignore", args.config.locale_directory);
@@ -106,11 +118,20 @@ impl Catalog {
                 continue;
             }
 
-            let locale = path.file_name().expect("no file stem").to_str().expect("cannot convert file stem").trim_end_matches(".po").to_string();
+            let locale = path
+                .file_name()
+                .expect("no file stem")
+                .to_str()
+                .expect("cannot convert file stem")
+                .trim_end_matches(".po")
+                .to_string();
             let locale = locale.replace('\\', "\\\\").replace('\"', "\\\"");
-            let file = std::fs::File::open(path).unwrap_or_else(|_| panic!("could not open the {locale} catalog"));
+            let file = std::fs::File::open(path)
+                .unwrap_or_else(|_| panic!("could not open the {locale} catalog"));
             let parser = PoParser::new();
-            let reader = parser.parse(file).unwrap_or_else(|_| panic!("could not parse the {locale} catalog"));
+            let reader = parser
+                .parse(file)
+                .unwrap_or_else(|_| panic!("could not parse the {locale} catalog"));
 
             let mut items = HashMap::new();
             for unit in reader {
@@ -119,17 +140,19 @@ impl Catalog {
                     continue;
                 };
                 let context = unit.context().unwrap_or("").to_string();
-                if let Message::Simple { id, text: Some(text) } = unit.message() {
+                if let Message::Simple {
+                    id,
+                    text: Some(text),
+                } = unit.message()
+                {
                     items.insert((context, id.to_owned()), text.to_owned());
                 }
             }
-        
+
             catalogs.insert(locale.to_string(), items);
         }
-    
-        Self {
-            catalogs,
-        }
+
+        Self { catalogs }
     }
 
     pub(crate) fn translate_text(&self, text: &str, args: &Args) -> Vec<(String, Vec<TextPart>)> {

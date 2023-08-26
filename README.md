@@ -21,7 +21,7 @@
 ```
 
 ```rust
-let html = template_html!("templates/hello.html", name="World");
+let html = yew_template::template_html!("templates/hello.html", name="World");
 ```
 
 The code above will actually compile to the following code:
@@ -56,7 +56,7 @@ let html = yew::html! {
 
 ```rust
 let name = "World";
-let html = template_html!("templates/hello.html", name);
+let html = yew_template::template_html!("templates/hello.html", name);
 ```
 
 Would compile to:
@@ -74,7 +74,7 @@ When the name of your variable isn't the same as the name in the template, you c
 
 ```rust
 let other_name = "Yew";
-let html = template_html!("templates/hello.html", name=other_name);
+let html = yew_template::template_html!("templates/hello.html", name=other_name);
 ```
 
 ### Attributes
@@ -86,7 +86,7 @@ let html = template_html!("templates/hello.html", name=other_name);
 ```
 
 ```rust
-let html = template_html!(
+let html = yew_template::template_html!(
     "templates/hello.html",
     name="Yew",
     style="color: red;"
@@ -122,14 +122,14 @@ let person = Person {
     first_name: "Edouard".to_string(),
     last_name: "Foobar".to_string()
 };
-let html = template_html!("templates/fields.html", person);
+let html = yew_template::template_html!("templates/fields.html", person);
 ```
 
 ### Expressions
 
 ```rust
 let name_reversed = String::from("dlroW");
-let html = template_html!(
+let html = yew_template::template_html!(
     "templates/hello.html",
     name = {
         let mut name = name_reversed.into_bytes();
@@ -169,11 +169,12 @@ Note that the curly brackets around expressions are required for expressions.
 ```
 
 ```rust
-let link = ctx.link();
-let html = template_html!(
+let onclick = yew::Callback::from(|()| {});
+
+let html = yew_template::template_html!(
     "templates/hello.html",
     name="World",
-    onclick={link.callback(|_| Msg::AddOne)}
+    onclick={onclick}
 );
 ```
 
@@ -240,7 +241,7 @@ From the Rust side, there is no usage difference. Note that curly brackets are r
 ```rust
 let opt_age: Option<u8> = Some(20);
 let opt_birth_city: Option<String> = None;
-let html = template_html!(
+let html = yew_template::template_html!(
     "templates/opt.html",
     name="John",
     opt_age,
@@ -265,8 +266,8 @@ Elements can be given a `present-if` attribute. The value will be evaluated at r
 </div>
 ```
 
-```rust
-let html = template_html!("templates/present_if.html", condition={ 1+1==3 });
+```rust ignore
+let html = yew_template::template_html!("templates/present_if.html", condition={ 1+1==3 });
 ```
 
 ### Iterators
@@ -283,9 +284,9 @@ The looping html element is marked with the `iter` attribute. The element will r
 </div>
 ```
 
-```rust
+```rust ignore
 let contributors = vec!["John", "Jane", "Jack"]; // Owned values need to be declared as `let` or they would be freed before the template is rendered.
-let html = template_html!(
+let html = yew_template::template_html!(
     "templates/iter.html",
     contributors_iter = {contributors.iter()},
     commits_iter = {[42, 21, 7].iter()}
@@ -294,7 +295,7 @@ let html = template_html!(
 
 The code above will act as the following for Yew:
 
-```rust
+```rust ignore
 let contributors = vec!["John", "Jane", "Jack"];
 let html = yew::html! {
     <div>
@@ -328,7 +329,7 @@ The whole point of using this crate is making your code more readable than when 
 
 ```rust
 let name = "World";
-let html = template_html!("templates/hello.html", ...);
+let html = yew_template::template_html!("templates/hello.html", ...);
 ```
 
 This behavior is disabled by default because missing variables are often mistakes. If you want to enable it without have to add `...` to every macro call, please set `auto_default` to true in your [config](#config).
@@ -345,7 +346,7 @@ Yew-template often requires you to add attributes on html elements such as `iter
 
 ```rust
 let opt_name = Some("John".to_string());
-let html = template_html!("templates/virtual.html", opt_name);
+let html = yew_template::template_html!("templates/virtual.html", opt_name);
 ```
 
 On Yew side, this will be seen as:

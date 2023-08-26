@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use proc_macro::{TokenStream, TokenTree, Span, Group, Delimiter, Ident, Punct, Spacing};
-use string_tools::{get_all_before, get_all_after_strict};
 use crate::*;
+use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::collections::HashMap;
+use string_tools::{get_all_after_strict, get_all_before};
 
 #[derive(Debug)]
 pub(crate) struct Args {
@@ -29,12 +29,21 @@ impl std::fmt::Display for ValOutput {
 }
 
 impl Args {
-    pub(crate) fn get_val(&self, id: &str, opts: &mut Vec<String>, iters: &mut Vec<String>, args: &Args) -> ValOutput {
+    pub(crate) fn get_val(
+        &self,
+        id: &str,
+        opts: &mut Vec<String>,
+        iters: &mut Vec<String>,
+        args: &Args,
+    ) -> ValOutput {
         // Handle helpers
         let mut parts = id.split(' ').filter(|p| !p.is_empty()).collect::<Vec<_>>();
         if parts.len() > 1 {
             let helper_id = parts.remove(0).to_string();
-            let args = parts.into_iter().map(|a| self.get_val(a, opts, iters, args).to_string()).collect::<Vec<_>>();
+            let args = parts
+                .into_iter()
+                .map(|a| self.get_val(a, opts, iters, args).to_string())
+                .collect::<Vec<_>>();
             let Some(helpers) = self.config.helpers.get(&helper_id) else {
                 abort!(self.path_span, "Helper called {helper_id} was not found");
             };
@@ -46,7 +55,11 @@ impl Args {
 
         let (id, field) = (get_all_before(id, "."), get_all_after_strict(id, "."));
         if id.chars().any(|c| !c.is_alphanumeric() && c != '_') {
-            abort!(args.path_span, "Invalid identifier: {id:?} in template {}", args.path);
+            abort!(
+                args.path_span,
+                "Invalid identifier: {id:?} in template {}",
+                args.path
+            );
         }
         if id.starts_with("opt_") || id.ends_with("_opt") {
             opts.push(id.to_string());
@@ -61,17 +74,28 @@ impl Args {
                 match field {
                     Some(field) => {
                         let mut token_stream = TokenStream::new();
-                        token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
-                        return ValOutput::TokenTree(TokenTree::Group(Group::new(Delimiter::Brace, token_stream)))
+                        token_stream.extend(vec![
+                            val,
+                            TokenTree::Punct(Punct::new('.', Spacing::Alone)),
+                            TokenTree::Ident(Ident::new(field, args.path_span)),
+                        ]);
+                        return ValOutput::TokenTree(TokenTree::Group(Group::new(
+                            Delimiter::Brace,
+                            token_stream,
+                        )));
                     }
-                    None => val
+                    None => val,
                 }
             }
             None => abort_call_site!(format!("Missing value for {id}")),
         };
         if let Some(field) = field {
             let mut token_stream = TokenStream::new();
-            token_stream.extend(vec![val, TokenTree::Punct(Punct::new('.', Spacing::Alone)), TokenTree::Ident(Ident::new(field, args.path_span))]);
+            token_stream.extend(vec![
+                val,
+                TokenTree::Punct(Punct::new('.', Spacing::Alone)),
+                TokenTree::Ident(Ident::new(field, args.path_span)),
+            ]);
             val = TokenTree::Group(Group::new(Delimiter::Brace, token_stream));
         }
         ValOutput::TokenTree(val)
@@ -80,7 +104,7 @@ impl Args {
 
 pub(crate) fn parse_args(args: TokenStream) -> Args {
     let config = config::read_config();
-    
+
     let mut tokens = args.into_iter().peekable();
     let _ = tokens.peek();
 
@@ -89,13 +113,21 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         Some(TokenTree::Literal(lit)) => {
             let path = lit.to_string();
             if !path.starts_with('"') || !path.ends_with('"') {
-                abort!(lit.span(), "Expected a string literal being the path to the template file");
+                abort!(
+                    lit.span(),
+                    "Expected a string literal being the path to the template file"
+                );
             }
             let path = path[1..path.len() - 1].to_string();
             (format!("{}{}", config.template_directory, path), lit.span())
-        },
-        Some(t) => abort!(t.span(), "First parameter should be a string literal of the path to the template file"),
-        None => abort_call_site!("Please specify the path to the template file as the first parameter"),
+        }
+        Some(t) => abort!(
+            t.span(),
+            "First parameter should be a string literal of the path to the template file"
+        ),
+        None => {
+            abort_call_site!("Please specify the path to the template file as the first parameter")
+        }
     };
 
     let mut vals = HashMap::new();
@@ -105,8 +137,11 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         // Check comma
         if !comma_passed {
             match tokens.next() {
-                Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {},
-                Some(t) => abort!(t.span(), "Expected a comma as a separator between parameters"),
+                Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {}
+                Some(t) => abort!(
+                    t.span(),
+                    "Expected a comma as a separator between parameters"
+                ),
                 None => break,
             }
         }
@@ -115,27 +150,33 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         // Get ident as id, or close the group and enable auto-default
         let (id, value_if_none) = match tokens.next() {
             Some(TokenTree::Ident(ident)) => (ident.to_string(), TokenTree::Ident(ident)),
-            Some(TokenTree::Punct(punct)) if punct.as_char() == '.' && punct.spacing() == Spacing::Joint => {
+            Some(TokenTree::Punct(punct))
+                if punct.as_char() == '.' && punct.spacing() == Spacing::Joint =>
+            {
                 match tokens.next() {
-                    Some(TokenTree::Punct(punct)) if punct.as_char() == '.' => {
-                        match tokens.next() {
-                            Some(TokenTree::Punct(punct)) if punct.as_char() == '.' => {
-                                match tokens.next() {
+                    Some(TokenTree::Punct(punct)) if punct.as_char() == '.' => match tokens.next() {
+                        Some(TokenTree::Punct(punct)) if punct.as_char() == '.' => {
+                            match tokens.next() {
                                     Some(_) => abort!(punct.span(), "Dots should be at the end of the parameter list and nothing should follow"),
                                     None => {
                                         auto_default = true;
                                         break;
                                     }
                                 }
-                            }
-                            Some(_) => abort!(punct.span(), "Expected a third dot for enabling auto-default"),
-                            None => {
-                                auto_default = true;
-                                break;
-                            }
                         }
-                    }
-                    _ => abort!(punct.span(), "Expected a second dot for enabling auto-default"),
+                        Some(_) => abort!(
+                            punct.span(),
+                            "Expected a third dot for enabling auto-default"
+                        ),
+                        None => {
+                            auto_default = true;
+                            break;
+                        }
+                    },
+                    _ => abort!(
+                        punct.span(),
+                        "Expected a second dot for enabling auto-default"
+                    ),
                 }
             }
             Some(t) => abort!(t.span(), "Expected an identifier after the comma"),
@@ -148,12 +189,12 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
             Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {
                 comma_passed = true;
                 vals.insert(id, value_if_none);
-                continue
-            },
+                continue;
+            }
             None => {
                 vals.insert(id, value_if_none);
-                break
-            },
+                break;
+            }
             Some(t) => abort!(t.span(), "Expected an equal sign after the identifier"),
         };
 
@@ -164,7 +205,10 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
         };
         if let TokenTree::Ident(ident) = &value {
             if ident.to_string() == id {
-                emit_warning!(ident.span(), "You can omit the value if it is the same as the identifier");
+                emit_warning!(
+                    ident.span(),
+                    "You can omit the value if it is the same as the identifier"
+                );
             }
         }
 
@@ -174,5 +218,13 @@ pub(crate) fn parse_args(args: TokenStream) -> Args {
     #[cfg(feature = "i18n")]
     let catalog = Catalog::new(&config.locale_directory);
 
-    Args { path, path_span, vals, auto_default, #[cfg(feature = "i18n")] catalog, config }
+    Args {
+        path,
+        path_span,
+        vals,
+        auto_default,
+        #[cfg(feature = "i18n")]
+        catalog,
+        config,
+    }
 }
